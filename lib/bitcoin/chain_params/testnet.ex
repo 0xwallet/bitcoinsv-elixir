@@ -26,10 +26,10 @@ defmodule Bitcoin.ChainParams.Testnet do
       ]
 
       @dns_seeds [
-        { "testnetbitcoin.jonasschnelli.ch", 'testnet-seed.bitcoin.jonasschnelli.ch' },
-        { "petertodd.org", "seed.tbtc.petertodd.org"},
-        { "bluematt.me", 'testnet-seed.bluematt.me' },
-        { "bitcoin.schildbach.de", "testnet-seed.bitcoin.schildbach.de"}
+        { "bitcoinsv.io", 'testnet-seed.bitcoinsv.io' }, # Bitcoin SV seeder
+        { "bitprim.org", 'testnet-seed.bitprim.org' }, # Bitprim
+        { "deadalnix.me", 'testnet-seed.deadalnix.me' }, # Amaury SÉCHET
+        { "criptolayer.net", 'testnet-seeder.criptolayer.net' }, # criptolayer.net
       ]
 
       # BIPs activation conditions

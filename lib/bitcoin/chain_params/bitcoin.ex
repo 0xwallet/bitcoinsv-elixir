@@ -26,12 +26,11 @@ defmodule Bitcoin.ChainParams.Bitcoin do
       ]
 
       @dns_seeds [
-        { "bitcoin.sipa.be", 'seed.bitcoin.sipa.be' }, # Pieter Wuille
-        { "bluematt.me", 'dnsseed.bluematt.me' }, # Matt Corallo
-        { "dashjr.org", 'dnsseed.bitcoin.dashjr.org' }, # Luke Dashjr
-        { "bitcoinstats.com", 'seed.bitcoinstats.com' }, # Christian Decker
-        { "xf2.org", 'bitseed.xf2.org' }, # Jeff Garzik
-        { "bitcoin.jonasschnelli.ch", 'seed.bitcoin.jonasschnelli.ch' } # Jonas Schnelli
+        { "bitcoinsv.io", 'seed.bitcoinsv.io' }, # Bitcoin SV seeder
+        { "bitcoinunlimited.info", 'btccash-seeder.bitcoinunlimited.info' }, # BU backed seeder
+        { "bitprim.org", 'seed.bitprim.org' }, # Bitprim
+        { "deadalnix.me", 'seed.deadalnix.me' }, # Amaury SÉCHET
+        { "criptolayer.net", 'seeder.criptolayer.net' }, # criptolayer.net
       ]
 
       # BIPs activation conditions

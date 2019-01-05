@@ -12,7 +12,7 @@ defmodule Bitcoin.ChainParams.Bitcoin do
 
       @genesis_hash "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f" |> Bitcoin.Util.hex_to_hash
 
-      @network_magic_bytes <<0xF9, 0xBE, 0xB4, 0xD9>>
+      @network_magic_bytes <<0xE3, 0xE1, 0xF3, 0xE8>>
 
       @default_listen_port 8333
 

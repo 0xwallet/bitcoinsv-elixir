@@ -4,7 +4,7 @@ defmodule Bitcoin.Mixfile do
   def project do
     [app: :bitcoin,
      version: "0.0.2",
-     elixir: "~> 1.4",
+     elixir: "~> 1.7",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
@@ -57,9 +57,6 @@ defmodule Bitcoin.Mixfile do
 
      # Static type analysis
      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
-
-     # bitcoin/libsecpy256k1 NIF
-     {:libsecp256k1, [github: "mbrix/libsecp256k1", manager: :rebar, optional: true]},
 
      # Node postgres storage engine
      {:ecto, github: "elixir-ecto/ecto", optional: true}, # can be switched to hex once 2.2 is out

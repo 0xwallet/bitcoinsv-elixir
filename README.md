@@ -14,7 +14,6 @@ protocol parsers and DNS peer discovery.
 * Basic script interpreter, but still missing many BIPs (currently 1103/1170 of bitcoin core script tests json)
 * Connecting and accepting connections from other peers
 * Syncing blockchain into a postgres database (or temporary memory storage)
-* Using [libsecp256k1](https://github.com/bitcoin-core/secp256k1) for validation
 * Configurable modules (you can plug in your own peer handler, connection manager, storage engine etc.)
 
 ## Roadmap

@@ -8,6 +8,7 @@
 - [详细模块文档](#模块文档)
 - [代码测试流程](#代码测试)
 - [比特币交易构造](#交易构造)
+- [比特币脚本](#比特币脚本)
 
 # 主要功能
 
@@ -503,8 +504,55 @@ ConnectionManager GenServer 的内部状态有:
 - sub_script: 同样被用于 sighash, 通常等于 pk_script.
 - flags: 脚本验证的选项. (例如 %{p2sh: true, dersig: true})
 
+# 比特币脚本
+
 与脚本执行相关的模块有:
 
 - Bitcoin.Script.Serialization: 将脚本从 binary 格式转换为 opcode list.
 - Bitcoin.Script.Control: 用于解析 OP_IF 这类条件语句.
 - Bitcoin.Script.Number: 用于编码解码整数(即原始 bitcoin 节点代码中的 CScriptNum).
+- Bitcoin.Script.Interpreter: 解释器, 用于运行 OPCODEs.
+- Bitcoin.Script.Opcodes: 定义 Opcodes 的名称和值之间的关系.
+
+## bitcoin/script.ex 模块名 Bitcoin.Script
+
+该模块是脚本相关功能的入口.
+
+**APIs:**
+
+- parse/1
+
+        将 binary 格式的脚本转换成类似于 "[:OP_10, :OP_10, :OP_ADD, <<20>>, :OP_EQUAL]" 这样的列表.
+
+- to_bianry/1
+
+        将 opcodes 列表格式的脚本转换成 binary 格式.
+
+- to_string/1
+
+        将 opcodes 列表格式的脚本转换成 bitcoind 兼容的解码后的脚本格式.
+
+- parse_string/1
+
+        将 bitcoind 解码的脚本格式转换为 opcodes 列表的格式.
+
+- parse_string/1
+
+        将测试用例中的格式转换为 opcodes 列表的格式.
+
+- exec/2
+
+        执行给定的脚本, 返回stack.
+
+- verify_sig_pk/2
+
+        分别验证 sig_script 和 pk_script, 返回运行结果的布尔值.
+
+- verify/2
+
+        执行一段脚本, 返回运行结果的布尔值.
+
+- cast_to_bool/1
+
+        将exec 的运行结果变为布尔值.
+

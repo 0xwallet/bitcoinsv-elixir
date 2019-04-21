@@ -48,6 +48,9 @@ end
 
 本质上, Application 是一种特殊的 Supervisor, 在应用模块中也需要定义它的子进程. 本项目中的应用模块是 "Bitcoin".
 
+5. 数据结构定义模块
+
+在 elixir 中, 使用 struct 来定义数据结构. 一般地, 结构的名称与其定义所处于的模块名相同. 在模块中看到 "defstruct", 就表明这是一个数据结构定义模块.
 ----
 
 接下来, 我们将会依照启动的顺序, 为每个模块做详细的介绍:
@@ -400,3 +403,48 @@ ConnectionManager GenServer 的内部状态有:
 在收到 :periodical_sync 消息后, Inventory 进程会先给自己发送一个 :sync 消息, 并且在 20 秒后再次给自己发送 :periodical_sync 消息.
 
 在收到 :sync 消息后, 首先判断是否和其它节点有网络连接, 如果有, 则向随机的一个远程节点发送获取区块的请求. 如果没有, 则 10 秒后再次给自己发送 :sync 消息.
+
+----
+
+以上, 就是本项目中主要的 "进程定义模块"(Application, GenServer, Supervisor). 接下来的文档是关于其它类型的模块(数据结构定义, 工具函数).
+
+## Bitcoin.Base58Check
+
+**类型:** 工具函数模块.
+
+**介绍:** 比特币地址才用 Base58 编码, 本模块提供了一系列 Base58 编码解码函数.
+
+**APIs:**
+
+- encode/1
+
+        由 binary 格式编码成 Base58 格式.
+
+- decode/1
+
+        将 Base58字符串(普通比特币地址) 解码成 binary 格式.
+
+- decode!/1
+
+        将 Base58字符串(普通比特币地址) 解码成 binary 格式, 解码失败时抛出异常.
+
+- valid?/1
+
+        判断一个字符串是否是合法的 Base58 格式.
+
+- base_encode/1
+
+        由 binary 格式编码成 Base58 格式.(不含 checksum).
+
+- base_decode/1
+
+        将 Base58字符串(普通比特币地址) 解码成 binary 格式(不含 checksum).
+
+- base_decode!/1
+
+        将 Base58字符串(普通比特币地址) 解码成 binary 格式(不含 checksum). 解码失败时抛出异常.
+
+- base_valid?/1
+
+        判断一个字符串是否是合法的 Base58 格式. (不含 checksum).
+

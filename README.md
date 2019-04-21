@@ -55,6 +55,8 @@ end
 
 ## bitcoin.ex 模块名 Bitcoin
 
+**类型:** Application
+
 该文件是启动节点应用时的入口文件, 定义了 Bitcoin Application. 为了方便测试, 我们不会在每次运行 `iex -S mix` (elixir 应用的命令行交互程序)的时候都启动节点. 所以, 要让节点正常启动, 需要在"config/dev.exs" 中配置:
 
 ```ex
@@ -80,6 +82,8 @@ config :bitcoin, :node,
 
 ## bitcoin/node/supervisor.ex 模块名 Bitcoin.Node.Supervisor
 
+**类型:** Supervisor
+
 该文件定义了 bitcoin 节点的最高监控树, Application 进程启动后, 首先启动的就是该监控树.
 
 ```ex
@@ -97,7 +101,9 @@ config :bitcoin, :node,
 
 ## bitcoin/node.ex 模块名 Bitcoin.Node
 
-该进程是一个 GenServer(通用微服务进程), 代表一个在运行的 Bitcoin 节点.
+**类型:** GenServer
+
+**职责:**  代表一个在运行的 Bitcoin 节点.
 
 **这个 GenServer 暴露的 API 有:**
 
@@ -159,7 +165,9 @@ config :bitcoin, :node,
 
 ## bitcoin/node/network/supervisor.ex 模块名 Bitcoin.Node.Network.Supervisor
 
-这是一个监控树, 它负责启动和网络有关的进程.
+**类型:** Supervisor
+
+**职责:**  它负责启动和网络有关的进程.
 
 ```ex
   def init(_) do
@@ -190,7 +198,9 @@ config :bitcoin, :node,
 
 ## bitcoin/node/network/addr.ex 模块名 Bitcoin.Node.Network.Addr
 
-该 GenServer 负责负责管理网络中的其它节点的地址.
+**类型:** GenServer
+
+**职责:**  负责管理网络中的其它节点的地址.
 
 **它暴露出来的 API 有:**
 
@@ -223,6 +233,8 @@ config :bitcoin, :node,
 
 **类型:** GenServer.
 
+**职责:** 查找种子节点的地址.
+
 **APIs:**
 
 - start_link/0
@@ -242,6 +254,8 @@ config :bitcoin, :node,
 ## bitcoin/node/network/connection_manager.ex 模块名 Bitcoin.Node.Network.ConnectionManager
 
 **类型:** GenServer.
+
+**职责:** 管理节点与其它 BSV 节点之间的连接.
 
 **APIs:**
 
@@ -302,3 +316,87 @@ ConnectionManager GenServer 的内部状态有:
 在收到 :periodical_connectivity_check 消息时, 首先会给自己发送一个 :check_connectivity 消息, 并且在 10 秒钟之后, 给自己再次发送 :periodical_connectivity_check 消息.
 
 在收到 :check_connectivity 消息时, 会计算当前已知的节点连接数, 如果还未到达上限, 就会调用 add_peer/1 函数, 来添加新的连接.
+
+## bitcoin/node/storage.ex 模块名 Bitcoin.Node.Storage
+
+**类型:** GenServer
+
+**职责:** 区块数据和交易数据的持久化.
+
+**APIs:**
+
+- start_link/1
+
+        启动 GenServer
+
+- store/2
+
+        存储交易或者区块.
+
+- max_height/0
+
+        已知的最大区块高度.
+
+- get_block_with_height/1
+
+        根据高度获取到区块数据.
+
+- store_block/2
+
+        存储区块数据.
+
+- block_height/1
+
+        根据区块数据来得出区块高度.
+
+**行为:**
+
+在 Storage 进程启动时, 首先会启动存储引擎, 例如 PostgreSQL 的客户端进程. 在存储引起启动成功后, 判断一下是否已经有区块数据, 如果没有, 就将创世区块的数据存入存储引擎.
+
+在本项目目前的代码中, Storage GenServer 在存储区块之前, 还要兼具验证区块的工作. 包括每个交易的所有输入是否已经存在, 等等.
+
+## bitcoin/node/inventory.ex 模块名 Bitcoin.Node.Inventory
+
+**类型:** GenServer
+
+**职责:** 从远程节点(peers) 那里获取缺失的数据, 并在验证后广播. 获取到的数据应当被添加到 storage 或者 mempool 中.
+
+**APIs:**
+
+- start_link/1
+
+        启动 GenServer
+
+- seen/1
+
+        其它 peers 看到了新的INV 消息时, 通过调用次函数来向本 GenServer 报告.
+
+- add/1
+
+        将具体的区块数据存储起来.
+
+- request_item/2
+
+        想某个 peer 请求某种数据.
+
+- check_sync/1
+
+        检查本 GenServer 是否处于等待接收区块的状态, 如果不是, 则进行更多的 sync.
+
+- check_orphans/1
+
+        检查本 GenServer 收到的孤块是否已经找到父块. 如以找到, 则将孤块的状态改为 :present.
+
+- block_locator_hashes/0, block_locator_hashes/4
+
+        计算从某个区块回溯得到的这条链的 block_locator_hashes.
+
+        > block_locator 是一系列的区块哈希, 用于描述一条链.从最高的区块开始回溯, 前十个块步长为1, 之后每往前一个块, 步长翻倍.
+
+**行为:**
+
+在 Inventory 进程启动时, 会给自己发送以下两条信息: :periodical_sync 和 :periodical_cleanup.
+
+在收到 :periodical_sync 消息后, Inventory 进程会先给自己发送一个 :sync 消息, 并且在 20 秒后再次给自己发送 :periodical_sync 消息.
+
+在收到 :sync 消息后, 首先判断是否和其它节点有网络连接, 如果有, 则向随机的一个远程节点发送获取区块的请求. 如果没有, 则 10 秒后再次给自己发送 :sync 消息.

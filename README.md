@@ -268,4 +268,37 @@ ConnectionManager GenServer 的内部状态有:
 - config: 配置信息
 - peers: 节点列表
 
-在启动本 GenServer 时, 会使用 "Reagent.start(ReagnetHandler, port: port)" 函数来新建 Socket, 然后启动一个 peer 进程, 并将 Socket 移交给 peer 进程.
+在启动本 GenServer 时, 会使用 "Reagent.start(ReagentHandler, port: port)" 函数来新建 Socket, 然后启动一个 peer 进程, 并将 Socket 移交给 peer 进程.
+
+这里需要重点介绍一下 Reagent. Reagent 是用于实现 Socket 连接池的. 很多情况下, 我们不想实现一个完整的 GenServer 来处理 TCP 连接, 而是仅仅需要一个函数来 handle 连接, 这时候就可以用 reanget 来轻松实现. 在本项目中, 我们的 Bitcoin 节点在连接到区块链网络里之后, 会收到其它节点发来的 TCP 连接请求, 这里使用 Regaent 来处理这些请求.
+
+启动 Reagent 服务, 需要调用 Reagent.start(ReagentHandler, options) , 这里的 ReagentHandler 是我们自己实现的 Reagent 定义, options 里包括端口号等配置信息.
+
+要自定义一个 ReagentHandler, 需要实现 start/0 和 handle/1 这两个函数回调. 采用 "use Reagent" 的时候, 可以省略 start/0 的实现. 在本项目中, 是这样定义 Reagent 的:
+
+```elixir
+  # Reagent connection handler
+  defmodule ReagentHandler do
+    use Reagent
+    use Bitcoin.Common
+
+    def handle(%Reagent.Connection{socket: socket}) do
+      {:ok, pid} = @modules[:peer].start(socket)
+      # Potential issue:
+      # If the connection gets closed after Peer.start but before switching the controlling process
+      # then probably Peer will never receive _:tcp_closed. Not sure if we need to care because
+      # it should just timout then
+      socket |> :gen_tcp.controlling_process(pid)
+      socket |> :inet.setopts(active: true)
+      :ok
+    end
+  end
+```
+
+我们的 Reagent 服务在接收到新的 socket 连接时, 会启动一个专门的 peer 进程, 并将 socket 移交个这个 peer 进程, 然后将这个 socket 设置为 active 状态(所有通过这个 socket 发送来的消息都会被转发给拥有这个 socket 的进程, 这里也就是 peer 进程.).
+
+在 GenServer ConnectionManager 启动之后, 如果配置中没有预先定义好的节点地址列表, 本 GenServer 就会给自己发送一个 :periodical_connectivity_check 消息. 如果有预先定义好的节点, 本 GenServer 就会主动与这些节点建立连接.
+
+在收到 :periodical_connectivity_check 消息时, 首先会给自己发送一个 :check_connectivity 消息, 并且在 10 秒钟之后, 给自己再次发送 :periodical_connectivity_check 消息.
+
+在收到 :check_connectivity 消息时, 会计算当前已知的节点连接数, 如果还未到达上限, 就会调用 add_peer/1 函数, 来添加新的连接.

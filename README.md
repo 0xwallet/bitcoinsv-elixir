@@ -5,7 +5,7 @@
 # 目录
 
 - [模块结构介绍](#模块结构)
-- [详细模块文档](#模块文档)
+- [网络相关模块](#网络模块)
 - [代码测试流程](#代码测试)
 - [比特币交易构造](#交易构造)
 - [比特币脚本](#比特币脚本)
@@ -63,7 +63,7 @@ end
 
 接下来, 我们将会依照启动的顺序, 为每个模块做详细的介绍:
 
-# 模块文档
+# 网络模块
 
 ## bitcoin.ex 模块名 Bitcoin
 
@@ -504,6 +504,101 @@ ConnectionManager GenServer 的内部状态有:
 - sub_script: 同样被用于 sighash, 通常等于 pk_script.
 - flags: 脚本验证的选项. (例如 %{p2sh: true, dersig: true})
 
+以下是与交易构造有关的模块:
+
+## bitcoin/protocol/messages/tx.ex 模块名 Bitcoin.Protocol.Messages.Tx
+
+**类型:** 数据结构定义模块.
+
+比特币交易的数据结构定义在此模块中, 有以下几个字段:
+
+- version
+- inputs
+- outputs
+- lock_time
+
+此模块定义了交易的编码和解码函数.
+
+**APIs:**
+
+- parse_stream/1
+
+        将交易从 binary 格式转换为 tx 结构体, 并保留剩余部分.
+
+- parse/1
+
+        将交易从 binary 格式转换为 tx 结构体, 不返回剩余部分
+
+- serialize/1
+
+        将tx 结构体转换为 binary 格式.
+
+## bitcoin/protocol/types/outpoint.ex 模块名 Bitcoin.Protocol.Types.Outpoint
+
+**类型:** 数据结构定义模块.
+
+Outpoint 相当于是交易输出的坐标, 在交易的每个 Input 中都要用到. 它包含以下几个字段:
+
+- hash: 交易的哈希
+- index: 此 output 是这笔的第几个 output
+
+**APIs:**
+
+- parse_stream/1
+
+        从 binary 格式转换为 Outpoint 结构体, 并保留剩余部分.
+
+- parse/1
+
+        从 binary 格式转换为 Outpoint 结构体, 不返回剩余部分
+
+- serialize/1
+
+        将 Outpoint 结构体转换为 binary 格式.
+
+
+## bitcoin/protocol/types/tx_input.ex 模块名 Bitcoin.Protocol.Types.TxInput
+
+**类型:** 数据结构定义模块.
+
+TxInput 表示交易中的输入, 包含以下几个字段:
+
+- previous_output: UTXO, 以 Outpoint 结构体的形式
+- signature_script: 解锁脚本.
+- swquence: 用于实现"交易替换"功能, 目前未启用
+
+**APIs:**
+
+- parse_stream/1
+
+        从 binary 格式转换为 TxInput 结构体, 并保留剩余部分.
+
+- serialize/1
+
+        将 TxInput 结构体转换为 binary 格式.
+
+## bitcoin/protocol/types/tx_output.ex 模块名 Bitcoin.Protocol.Types.TxOutput
+
+**类型:** 数据结构定义模块.
+
+TxOutput 表示交易中的输出, 包含以下几个字段:
+
+- value: 金额
+- pk_script: 锁定脚本
+
+**APIs:**
+
+- parse_stream/1
+
+        从 binary 格式转换为 TxOutput 结构体, 并保留剩余部分.
+
+- serialize/1
+
+        将 TxOutput 结构体转换为 binary 格式.
+
+
+
+
 # 比特币脚本
 
 与脚本执行相关的模块有:
@@ -568,24 +663,26 @@ ConnectionManager GenServer 的内部状态有:
 
 - run/3
 
-        运行已变换成 opcode list 格式的脚本. 一般情况下, 脚本是按顺序执行的, 除了以下特殊情况:
+        运行已变换成 opcode list 格式的脚本.
 
-        1. 控制语句(IF, ELSE, NOTIF, ENDIF):
+**一般情况下, 脚本是按顺序执行的, 除了以下特殊情况:**
 
-        例如 "IF [a] ELSE [b] ENDIF" , 需要在运行之前, 先解析出 [a] 和 [b] 的脚本. 在本项目中, Bitcoin.Script.Control 模块中的 extract 系列函数是专门用于解析此类控制语句的. 步骤如下:
+1. 控制语句(IF, ELSE, NOTIF, ENDIF):
 
-        当读取到 IF 操作符时, 对脚本的剩余部分调用 parse_if 函数. 该函数包含这些参数: if_block(即代码块 a), else_block(即代码块 b), script(即剩余脚本), depth(控制语句的嵌套深度).
+例如 "IF [a] ELSE [b] ENDIF" , 需要在运行之前, 先解析出 [a] 和 [b] 的脚本. 在本项目中, Bitcoin.Script.Control 模块中的 extract 系列函数是专门用于解析此类控制语句的. 步骤如下:
 
-        当 parse_if 函数读取到 ENDIF 操作符, 且嵌套深度为 0 时, 返回 if_block 和 else_block, 以及剩余的 script.
+当读取到 IF 操作符时, 对脚本的剩余部分调用 parse_if 函数. 该函数包含这些参数: if_block(即代码块 a), else_block(即代码块 b), script(即剩余脚本), depth(控制语句的嵌套深度).
 
-        当 parse_if 函数读取到 ELSE 操作符, 且嵌套深度为 0 时, 调用 parse_else 函数.
+当 parse_if 函数读取到 ENDIF 操作符, 且嵌套深度为 0 时, 返回 if_block 和 else_block, 以及剩余的 script.
 
-        当 parse_if 函数读取到 IF, NOTIF, ENDIF 中的任意一个, 且嵌套深度不为0 时, 会根据情况改变嵌套深度.
+当 parse_if 函数读取到 ELSE 操作符, 且嵌套深度为 0 时, 调用 parse_else 函数.
 
-        parse_else 的行为与 parse_if 类似, 只是会将操作符读取到 else_block 中.
+当 parse_if 函数读取到 IF, NOTIF, ENDIF 中的任意一个, 且嵌套深度不为0 时, 会根据情况改变嵌套深度.
 
-        每次调用 extract 系列函数, 只会解析出一层的控制语句(即 {if_block, else_block, rest_script}), 然后根据条件的真或假来继续调用 run 函数运行 if_block 或者 else_block.
+parse_else 的行为与 parse_if 类似, 只是会将操作符读取到 else_block 中.
 
-        2. 签名验证操作符(CHECKMULTISIG[VERIFY], CHECKSIG[VERIFY]).
+每次调用 extract 系列函数, 只会解析出一层的控制语句(即 {if_block, else_block, rest_script}), 然后根据条件的真或假来继续调用 run 函数运行 if_block 或者 else_block.
 
-        这类操作符的运行机制将在 Bitcoin.Tx 模块中详细解释.
+2. 签名验证操作符(CHECKMULTISIG[VERIFY], CHECKSIG[VERIFY]).
+
+这类操作符的运行机制将在 Bitcoin.Tx 模块中详细解释.

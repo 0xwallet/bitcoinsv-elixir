@@ -8,3 +8,4 @@
 /test/data/auto
 erl_crash.dump
 *.ez
+.elixir_ls/

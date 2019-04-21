@@ -556,3 +556,36 @@ ConnectionManager GenServer 的内部状态有:
 
         将exec 的运行结果变为布尔值.
 
+## bitcoin/script/interpreter.ex 模块名 Bitcoin.Script.Interpreter
+
+**APIs:**
+
+- validate/1
+
+        如果脚本有以下任一情况出现, 则判定其不合法:
+        1. 脚本中包含任何已禁用了的操作符;
+        2. 超过操作符数量上限(OP_0..OP_16, 以及 OP_RESERVED 不计在内).
+
+- run/3
+
+        运行已变换成 opcode list 格式的脚本. 一般情况下, 脚本是按顺序执行的, 除了以下特殊情况:
+
+        1. 控制语句(IF, ELSE, NOTIF, ENDIF):
+
+        例如 "IF [a] ELSE [b] ENDIF" , 需要在运行之前, 先解析出 [a] 和 [b] 的脚本. 在本项目中, Bitcoin.Script.Control 模块中的 extract 系列函数是专门用于解析此类控制语句的. 步骤如下:
+
+        当读取到 IF 操作符时, 对脚本的剩余部分调用 parse_if 函数. 该函数包含这些参数: if_block(即代码块 a), else_block(即代码块 b), script(即剩余脚本), depth(控制语句的嵌套深度).
+
+        当 parse_if 函数读取到 ENDIF 操作符, 且嵌套深度为 0 时, 返回 if_block 和 else_block, 以及剩余的 script.
+
+        当 parse_if 函数读取到 ELSE 操作符, 且嵌套深度为 0 时, 调用 parse_else 函数.
+
+        当 parse_if 函数读取到 IF, NOTIF, ENDIF 中的任意一个, 且嵌套深度不为0 时, 会根据情况改变嵌套深度.
+
+        parse_else 的行为与 parse_if 类似, 只是会将操作符读取到 else_block 中.
+
+        每次调用 extract 系列函数, 只会解析出一层的控制语句(即 {if_block, else_block, rest_script}), 然后根据条件的真或假来继续调用 run 函数运行 if_block 或者 else_block.
+
+        2. 签名验证操作符(CHECKMULTISIG[VERIFY], CHECKSIG[VERIFY]).
+
+        这类操作符的运行机制将在 Bitcoin.Tx 模块中详细解释.

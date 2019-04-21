@@ -42,10 +42,18 @@ end
 
 监控者模块也可以被放在监控树下, 形成一个树状的监控结构, 我们以 "supervisor"(监控者) 来标注这些模块. 本项目中, "Bitcoin.Node.Network.Supervisor" 模块, "Bitcoin.Node.Supervisor" 模块, 都是 Supervisor 模块. 注意到, 监控者模块通常以 "Supervisor" 来命名.
 
+4. Application(应用)模块
+
+应用模块是最顶级的模块, 也是 elixir 程序启动之后第一个执行的模块. 在应用模块中, 会看到 "use Application" 这样的代码.
+
+本质上, Application 是一种特殊的 Supervisor, 在应用模块中也需要定义它的子进程. 本项目中的应用模块是 "Bitcoin".
+
+----
+
+接下来, 我们将会依照启动的顺序, 为每个模块做详细的介绍:
 
 
-
-## bitcoin.ex
+## bitcoin.ex 模块名 Bitcoin
 
 该文件是启动节点应用时的入口文件, 定义了 Bitcoin Application. 为了方便测试, 我们不会在每次运行 `iex -S mix` (elixir 应用的命令行交互程序)的时候都启动节点. 所以, 要让节点正常启动, 需要在"config/dev.exs" 中配置:
 
@@ -70,7 +78,7 @@ config :bitcoin, :node,
     end
 ```
 
-## bitcoin/node/supervisor.ex
+## bitcoin/node/supervisor.ex 模块名 Bitcoin.Node.Supervisor
 
 该文件定义了 bitcoin 节点的最高监控树, Application 进程启动后, 首先启动的就是该监控树.
 
@@ -87,37 +95,37 @@ config :bitcoin, :node,
 
 当子进程出错崩溃的时候, 监控树会重启子进程.
 
-## bitcoin/node.ex
+## bitcoin/node.ex 模块名 Bitcoin.Node
 
 该进程是一个 GenServer(通用微服务进程), 代表一个在运行的 Bitcoin 节点.
 
-- 这个 GenServer 暴露的 API 有:
+**这个 GenServer 暴露的 API 有:**
 
-### start_link/0
+- start_link/0
 
-启动节点进程.
+        启动节点进程.
 
-### version_fields/0
+- version_fields/0
 
-获得本节点的 version 消息.
+        获得本节点的 version 消息.
 
-### config/0
+- config/0
 
-获得本节点的配置信息.
+        获得本节点的配置信息.
 
-### nonce/0
+- nonce/0
 
-获得本节点所使用的随机数.
+        获得本节点所使用的随机数.
 
-### height/0
+- height/0
 
-本节点的初始区块高度.
+        本节点的初始区块高度.
 
-### protocol_version/0
+- protocol_version/0
 
-所使用的 p2p 协议的版本.
+        所使用的 p2p 协议的版本.
 
-- 该节点启动后的行为是:
+**该节点启动后的行为是:**
 
 1. 给自己发送 :initialize 消息
 ```ex
@@ -149,7 +157,7 @@ config :bitcoin, :node,
   end
 ```
 
-## bitcoin/node/network/supervisor.ex
+## bitcoin/node/network/supervisor.ex 模块名 Bitcoin.Node.Network.Supervisor
 
 这是一个监控树, 它负责启动和网络有关的进程.
 
@@ -180,34 +188,84 @@ config :bitcoin, :node,
 
 以上进程全部都是 GenServer.
 
-## bitcoin/node/network/addr.ex
+## bitcoin/node/network/addr.ex 模块名 Bitcoin.Node.Network.Addr
 
 该 GenServer 负责负责管理网络中的其它节点的地址.
 
-- 它暴露出来的 API 有:
+**它暴露出来的 API 有:**
 
-### start_link/0
+- start_link/0
 
-启动.
+        启动.
 
-### add/1
+- add/1
 
-添加新的节点地址.
+        添加新的节点地址.
 
-### get/0
+- get/0
 
-获取随机的一个节点的地址.
+        获取随机的一个节点的地址.
 
-### count/0
+- count/0
 
-计算已知的节点的数量.
+        计算已知的节点的数量.
 
-### clear/0
+- clear/0
 
-删除所有的地址.
+        删除所有的地址.
 
-- 它的行为机制是:
+**它的行为机制是:**
 
 1. 启动后, 过60秒, 给自己发送一个 :periodical_persistance 消息.
 2. 收到 :periodical_persistance 消息后, 过60秒, 会再给自己发送一个 :periodical_persistance 消息. 并且删除超出限制的节点地址(目前上限1000个), 并保存剩余的地址到持久存储设备上.
 
+## bitcoin/node/network/discovery.ex 模块名 Bitcoin.Node.Network.Discovery
+
+**类型:** GenServer.
+
+**APIs:**
+
+- start_link/0
+
+        启动进程, 并且添加与父进程之间的 link.
+
+> link 的作用是, 子进程崩溃的时候, 会传导到父进程.
+
+- begin_discovery/0
+
+        开始 DNS 搜索.
+
+**行为模式:**
+
+该进程在收到 :begin_discovery 消息之后, 会执行 DNS 搜索策略, 即 "Strategy.DNS.gather_peers/1" . 根据配置中已知的域名, 来搜索 DNS 服务器上的 A 记录, 获取到种子节点的 ip 列表. 然后将这些节点地址发送给负责管理节点地址的进程.
+
+## bitcoin/node/network/connection_manager.ex 模块名 Bitcoin.Node.Network.ConnectionManager
+
+**类型:** GenServer.
+
+**APIs:**
+
+- start_link/0
+
+        启动进程, 并且添加与父进程之间的 link.
+
+- connect(ip, port)
+
+        请求根据 ip 和端口号, 建立 TCP 连接.
+
+- register_peer/0
+
+        由负责与其它节点保持连接的 peer 进程, 向这个 ConnectionManager 进程发送注册请求.
+
+- peers/0
+
+        获取 ConnectionManager 进程所有的 peer 信息.
+
+**行为模式:**
+
+ConnectionManager GenServer 的内部状态有:
+
+- config: 配置信息
+- peers: 节点列表
+
+在启动本 GenServer 时, 会使用 "Reagent.start(ReagnetHandler, port: port)" 函数来新建 Socket, 然后启动一个 peer 进程, 并将 Socket 移交给 peer 进程.

@@ -31,7 +31,7 @@ defmodule Bitcoin.Tx.Sighash do
       tx.inputs
         |> Enum.map(fn input -> input |> Map.put(:signature_script, <<>>) end)
         # Set script for current transaction input to sub_script
-        |> List.replace_at(input_number, tx.inputs |> Enum.at(input_number) |> Map.put(:signature_script, sub_script |> remove_op_codeseparator(sighash_type &&& @sighash_forkid) ))
+        # |> List.replace_at(input_number, tx.inputs |> Enum.at(input_number) |> Map.put(:signature_script, sub_script |> remove_op_codeseparator(sighash_type &&& @sighash_forkid) ))
     )
     case tx |> prepare_tx(input_number, sighash_type) do
       # Due to a bug in bitcoin core, in case of error (more inputs than outputs for @sighash_single

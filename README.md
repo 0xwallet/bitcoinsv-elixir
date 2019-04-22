@@ -59,6 +59,7 @@ end
 5. 数据结构定义模块
 
 在 elixir 中, 使用 struct 来定义数据结构. 一般地, 结构的名称与其定义所处于的模块名相同. 在模块中看到 "defstruct", 就表明这是一个数据结构定义模块.
+
 ----
 
 接下来, 我们将会依照启动的顺序, 为每个模块做详细的介绍:
@@ -676,7 +677,10 @@ DER 签名包含的字段有:
 - low_s?/1
 
         判断 S 值是否小于等于 order/2.
-        详细定义请看  https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Low_S_values_in_signatures
+
+**Low S 签名**:
+
+在比特币中, 要求签名的 S 值必须是在 0x1 到 0x7FFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF 5D576E73 57A4501D DFE92F46 681B20A0 (包含) 范围内. 如果 S 值过高, 只需要让 S' =  0xFFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141 - S 即可.
 
 - strict?/1
 
@@ -695,6 +699,8 @@ DER 签名包含的字段有:
 - Bitcoin.Script.Opcodes: 定义 Opcodes 的名称和值之间的关系.
 
 ## bitcoin/script.ex 模块名 Bitcoin.Script
+
+**类型:** 工具函数模块.
 
 该模块是脚本相关功能的入口.
 
@@ -738,6 +744,8 @@ DER 签名包含的字段有:
 
 ## bitcoin/script/interpreter.ex 模块名 Bitcoin.Script.Interpreter
 
+**类型:** 工具函数模块.
+
 **APIs:**
 
 - validate/1
@@ -771,3 +779,28 @@ parse_else 的行为与 parse_if 类似, 只是会将操作符读取到 else_blo
 2. 签名验证操作符(CHECKMULTISIG[VERIFY], CHECKSIG[VERIFY]).
 
 这类操作符的运行机制将在 Bitcoin.Tx 模块中详细解释.
+
+## bitcoin/script/number.ex 模块名 Bitcoin.Script.Number
+
+**类型:** 工具函数模块.
+
+本模块定义了一系列用于操作 Script Integer 的方法函数. 比特序列被转换成 little-endian 的可变长度整数. 最高位(小于0x80的需要在签名补0)表示整数的符号. 因此 0x81 (即[1, 0, 0, 0, 0, 0, 0, 1])表示 -1, 0x80 (即[1, 0, 0, 0, 0, 0, 0, 0])表示表示负0. 正0使用无长度的字节串来表示.
+
+数学运算操作符可接受的最大整数是 4 个字节, 但是运算结果可能会超出限制.
+
+**APIs:**
+
+- num/2
+
+        将 binary 格式的 ScriptInteger, 转换为普通的整数.
+
+- bin/1
+
+        将整数转换为 binary 格式的 ScriptInteger.
+
+**更多例子:**
+
+        <<0xFF>>(即 [1, 1, 1, 1, 1, 1, 1, 1]) 表示 -127
+        <<0x82>>(即 [1, 0, 0, 0, 0, 0, 1, 0]) 表示 -2
+        <<0x11>>(即 [0, 0, 0, 1, 0, 0, 0, 1]) 表示 17
+        <<0xFF, 0xFF, 0xFF, 0xFF>>(即 [255, 255, 255, 255], 第一个 byte 用二进制表示是 [1, 1, 1, 1, 1, 1, 1, 1], 按 ScriptInteger 格式表示的是 -127), 表示 -2147483647.

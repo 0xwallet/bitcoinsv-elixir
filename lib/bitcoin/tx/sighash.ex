@@ -21,8 +21,6 @@ defmodule Bitcoin.Tx.Sighash do
   Calculate transaction hash for signing
 
   documentation: https://en.bitcoin.it/wiki/OP_CHECKSIG#cite_note-1
-
-  forkid open
   """
   @spec sighash(Messages.Tx.t, non_neg_integer, binary, byte) :: binary
   def sighash(%Messages.Tx{} = tx, input_number, sub_script, sighash_type \\ @sighash_all) do
@@ -31,7 +29,7 @@ defmodule Bitcoin.Tx.Sighash do
       tx.inputs
         |> Enum.map(fn input -> input |> Map.put(:signature_script, <<>>) end)
         # Set script for current transaction input to sub_script
-        # |> List.replace_at(input_number, tx.inputs |> Enum.at(input_number) |> Map.put(:signature_script, sub_script |> remove_op_codeseparator(sighash_type &&& @sighash_forkid) ))
+        |> List.replace_at(input_number, tx.inputs |> Enum.at(input_number) |> Map.put(:signature_script, sub_script |> remove_op_codeseparator))
     )
     case tx |> prepare_tx(input_number, sighash_type) do
       # Due to a bug in bitcoin core, in case of error (more inputs than outputs for @sighash_single
@@ -101,10 +99,6 @@ defmodule Bitcoin.Tx.Sighash do
 
   # SIGHASH_ALL - nothing to do
   defp prepare_tx(tx, _input_number, _sighash_type), do: tx
-
-  defp has_forkid(sighash_type) do
-    (sighash_type >>> 8) == @sighash_forkid
-  end
 
   @spec remove_op_codeseparator(binary) :: binary
   defp remove_op_codeseparator(script) do

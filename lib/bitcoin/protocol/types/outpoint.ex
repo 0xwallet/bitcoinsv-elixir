@@ -38,4 +38,11 @@ defmodule Bitcoin.Protocol.Types.Outpoint do
     >>
   end
 
+  @doc """
+  Find the correct private key for Outpoint, from key list.
+  """
+  def find_priv_key(%__MODULE__{} = s, keys) do
+
+  end
+
 end

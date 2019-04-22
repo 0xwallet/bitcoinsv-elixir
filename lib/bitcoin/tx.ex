@@ -9,9 +9,14 @@ defmodule Bitcoin.Tx do
   use Bitcoin.Common
 
   alias Bitcoin.Protocol.Messages
+  alias Bitcoin.Protocol.Types.TxInput
+  alias Bitcoin.Protocol.Types.Outpoint
   alias Bitcoin.Tx.Sighash
 
   require Logger
+
+  # satoshis/byte
+  @fee_rate 3
 
   @type t_hash :: Bitcoin.t_hash
 
@@ -31,6 +36,36 @@ defmodule Bitcoin.Tx do
     tx
       |> Messages.Tx.serialize
       |> Bitcoin.Util.double_sha256
+  end
+
+  @doc """
+  Known utxos, output value, and destination address,
+  making a signed tx.
+  """
+  def make(utxos, addr_value_pairs, fee_rate \\ @fee_rate) do
+    %Messages.Tx{
+
+    }
+  end
+
+  @doc """
+  Sign a transaction.
+  """
+  def sign(%Messages.Tx{} = tx) do
+    tx
+    |> sign_each_input()
+  end
+
+  defp sign_each_input(tx) do
+    inputs = tx.inputs
+    sighash = sighash(tx, nil, nil, nil) # TODO
+
+    inputs2 =
+      for input <- inputs do
+        TxInput.sign(input, sighash)
+      end
+
+    %Messages.Tx{tx | inputs: inputs2}
   end
 
   @doc """

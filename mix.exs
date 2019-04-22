@@ -60,7 +60,10 @@ defmodule Bitcoin.Mixfile do
 
      # Node postgres storage engine
      {:ecto, github: "elixir-ecto/ecto", optional: true}, # can be switched to hex once 2.2 is out
-     {:postgrex, "~> 0.13", optional: true}
+     {:postgrex, "~> 0.13", optional: true},
+
+     # third-party bsv api
+     {:sv_api, github: "0xwallet/sv_api", branch: "develop"}
     ]
   end
 

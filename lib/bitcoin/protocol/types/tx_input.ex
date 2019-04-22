@@ -41,4 +41,11 @@ defmodule Bitcoin.Protocol.Types.TxInput do
     << s.sequence ::  unsigned-little-integer-size(32) >>
   end
 
+  @doc """
+  Sign a Txinput with private key.
+  """
+  def sign(%__MODULE__{}, key) do
+    #TODO
+  end
+
 end

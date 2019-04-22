@@ -686,6 +686,31 @@ DER 签名包含的字段有:
 
         根据 BIP66, 判断签名是否是严格的 DER 签名.
 
+**BIP66:**
+
+BIP66 是 2015年 BitcoinCore 开发者引入的. 原因是要减少对 OpenSSL 签名验证的依赖. 由于 OpenSSL 实现的不确定性, 可能会引起签名验证在不同版本的 OpenSSL 上会有不同的结果. 所以需要对签名验证流程做详细的规范. 最终目标是让所有的比特币节点实现都不再依赖 OpenSSL.
+
+每个传送给 OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CHECKMULTISIG, 或 OP_CHECKMULTISIGVERIFY 的签名, 都需要用到 ECDSA 验证, 都必须遵守严格 DER 编码.
+
+这些操作符都是在栈(stack)上对 pubkey/signature pair(公钥签名对) 做 ECDSA 签名验证. 验证过程中, 如果发现签名的编码格式不正确, 应该立刻让整个脚本的运行结果返回 false. 如果签名格式正确, 但没有通过 ECDSA 验证, 那么应该继续执行后续的脚本.
+
+有以下情况出现时, 即判定 DER 签名格式不是严格的:
+
+1. 长度小于8字节
+2. 长度大于72字节
+3. der类型 不等于 0x30
+4. der长度 不等于 签名长度减去2
+5. der长度 不等于 r_length + s_length + 4
+6. r_type 不等于 0x02
+7. r 等于 空字符串
+8. r 为 负值
+9. r 有 前补0
+10. s_type 不等于 0x02
+11. s 等于 空字符串
+12. s 为 负值
+13. s 有 前补0
+
+以上情况都没有出现时, 即判定 DER 签名时严格的.
 
 
 # 比特币脚本

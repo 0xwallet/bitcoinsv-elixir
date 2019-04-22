@@ -596,6 +596,91 @@ TxOutput 表示交易中的输出, 包含以下几个字段:
 
         将 TxOutput 结构体转换为 binary 格式.
 
+## bitcoin/tx.ex 模块名 Bitcoin.Tx
+
+**类型:** 工具函数模块.
+
+本模块中提供了一系列用于操作 Tx 数据结构的方法函数.
+
+**APIs:**
+
+- sighash/4
+
+        计算出交易签名的哈希.
+        得到的结果与真正的 sighash 相差一次哈希运算, 这是因为 :crypto.verify/5 函数在验证签名时会先多做一次哈希运算.
+
+- hash/1
+
+        计算 Tx 结构体的哈希(首先将结构体序列化).
+
+- total_output_value/2
+
+        计算出交易的总输出(单位是 satoshis).
+
+- total_input_value/2
+
+        计算出交易的总输入(单位是 satoshis).
+
+- fee/2
+
+        计算出交易的手续费(总输入减去总输出).
+
+- validate/2
+
+        验证交易的合法性.
+        在这个函数中, 会检查以下内容:
+
+        1. 之前的 outputs 是否存在
+        2. 脚本执行的结果是否合适
+        3. 总输入是否大于总输出
+        4. 之前的 output 是否已经被花费
+
+## bitcoin/der_sig.ex 模块名 Bitcoin.DERSig
+
+**类型:** 数据结构定义模块 + 工具函数模块.
+
+本模块中定义了 DERSig 结构体, 同时也提供了一系列用于操作 DER 编码签名的方法函数. DER 格式的签名被用于 Bitcoin Script 中.
+
+由于 :crypto.verify 函数在验证签名时, 如果签名的 R 或 S 值是有补0的, 则不能通过验证. 所以在验证签名之前, 需要对签名进行 normalize 操作.
+
+DER 签名包含的字段有:
+
+- type: 类型
+- total_length: 总长度
+- r_type
+- r_length
+- r
+- s_type
+- s_length
+- s
+
+**APIs:**.
+
+- parse/1
+
+        从 binary 格式转换为 DERSig 结构体.
+
+- serialize/1
+
+        将 DERSig 结构体转换为 binary 格式.
+
+- normalize/1
+
+        规范化签名. 步骤有:
+        1. 消除 R 和 S 值之前的补0
+        2. 修正 total_length
+        3. 修正负的 S
+        4. 修正负的 R
+        5. 保证 S 为 low S
+
+- low_s?/1
+
+        判断 S 值是否小于等于 order/2.
+        详细定义请看  https://github.com/bitcoin/bips/blob/master/bip-0062.mediawiki#Low_S_values_in_signatures
+
+- strict?/1
+
+        根据 BIP66, 判断签名是否是严格的 DER 签名.
 
 
 

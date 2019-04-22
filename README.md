@@ -12,9 +12,58 @@
 
 # 使用说明
 
-1. [如何安裝](#如何安裝)
-2. [如何查看bitcoin地址餘額](#如何查看bitcoin地址餘額)
+1. [如何安装](#如何安装)
+2. [如何查看bitcoin地址余额](#如何查看bitcoin地址余额)
 3. [如何構建交易](#如何構建交易)
+
+## 如何安装
+
+本项目是一个 elixir lib, 在使用本项目前, 请确保已安装了以下应用:
+
+- [erlang 21.0 以上](http://www.erlang.org/downloads)
+- [elixir 1.7 以上](https://elixir-lang.org/install.html)
+
+之后, 就可以 clone 本项目到本地, 运行 `iex -S mix` 即可进入shell 交互.
+
+## 如何查看bitcoin地址余额
+
+本项目尚未提供直接查询某个比特币地址的余额的 API. 但目前可以通过组合本项目里已提供的多个 API 来达到查询余额的目的.
+
+后续开发过程中将实现专门的余额查询 API.
+
+目前的查询步骤如下:
+
+1. 启动节点, 开始同步区块数据.
+
+        ```ex
+        # 确保配置文件里有以下内容, 即使用 Postgres 作为区块数据存储引擎
+        config :bitcoin, :node,
+          modules: [
+            storage_engine: Bitcoin.Node.Storage.Engine.Postgres
+        ]
+        ```
+
+2. 运行 `iex -S mix` 进入交互 shell. 这时节点程序会自动和其它比特币节点进行连接, 并同步区块数据.
+
+3. 当已同步了的区块达到了网络中的当前区块时, 就可以在数据库中搜索对应的 outputs(即想要查询的比特币地址, 这里设为 addr1 ).
+
+        需要查询的是 `tx_outputs` table. 查询条件是 tx_output 的 pk_script 要等于 addr1 对应的 pk_script.
+
+        这样, 就获得了所有转入 addr1 的交易输出.
+
+4. 此时我们已经可以得到 addr1 一共被转入了的金额. 还需要减去已经从 addr1 中转出的总金额.
+
+        利用刚才得到的 tx_outputs, 可以找到每个 tx_outputs 的 tx_hash 与 index.
+
+        然后, 在 `tx_inputs` table 中, 查找符合以下条件的       input:
+
+        - input.prevout_hash == output.tx_hash
+        - input.prevout_index == output.index
+
+        符合以上条件, 就代表这笔 output 已经被花出去了. 由此, 我们就得到了 addr1 已花费的金额, 以及余额.
+
+
+
 
 # 主要功能
 

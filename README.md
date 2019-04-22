@@ -14,7 +14,9 @@
 
 1. [如何安装](#如何安装)
 2. [如何查看bitcoin地址余额](#如何查看bitcoin地址余额)
-3. [如何構建交易](#如何構建交易)
+3. [如何构建交易](#如何构建交易)
+4. [如何计算手续费](#如何计算手续费)
+5. [如何签名交易](#如何签名交易)
 
 ## 如何安装
 
@@ -55,14 +57,65 @@
 
         利用刚才得到的 tx_outputs, 可以找到每个 tx_outputs 的 tx_hash 与 index.
 
-        然后, 在 `tx_inputs` table 中, 查找符合以下条件的       input:
+        然后, 在 `tx_inputs` table 中, 查找符合以下条件的 input:
 
         - input.prevout_hash == output.tx_hash
         - input.prevout_index == output.index
 
-        符合以上条件, 就代表这笔 output 已经被花出去了. 由此, 我们就得到了 addr1 已花费的金额, 以及余额.
+        能够找到符合以上条件的 input, 就代表这笔 output 已经被花出去了. 由此, 我们就得到了 addr1 已花费的金额, 以及余额.
 
+## 如何构建交易
 
+构建(未签名的)交易首先需要以下几个部分的数据:
+
+- UTXO
+        (未花费的交易输出, 使用 [如何查看bitcoin地址余额](#如何查看bitcoin地址余额)) 中所提到的方法, 可以找到特定地址的 UTXO.
+- 交易输出
+        (也就是这笔交易想要转入的地址, 以及金额)
+
+本项目中尚未提供直接构建交易的 API, 但目前可以通过组合本项目里已提供的多个 API 来达到构建交易的目的.
+
+后续开发过程中将实现专门的构建交易 API.
+
+目前的构建交易步骤如下:
+
+1. 使用 [如何查看bitcoin地址余额](#如何查看bitcoin地址余额) 中提到的方法, 获得 UTXO 列表, 设为 my_utxos.
+
+2. 新建一个 `%Bitcoin.Protocol.Messages.Tx{}` 结构体, 设为 my_tx, 简写为 `%Tx{}`. 该结构体有以下字段:
+
+        - version: 默认值即可
+        - inputs: 需要构造
+        - outputs: 需要构造
+        - lock_time: 默认值即可
+
+3. 将 my_utxos 中的每个 utxo 转换为 `%Bitcoin.Protocol.Types.Outpoint{}` 结构体, 简写为 `%Outpoint{}`:
+
+        ```ex
+        %Outpoint{
+          hash: utxo.hash,
+          index: utxo.index
+        }
+        ```
+
+4. 将上一步得到的所有 outpoint 逐一转换成 `%Bitcoin.Protocol.Types.TxInput{}` 结构体, 简写为 `%TxInput{}`.
+
+        每个 input 里有如下字段:
+        - previous_output: 上一步得到的 outpoint 结构体
+        - signature_script: 用于解锁 utxo 的签名脚本, 暂时未空
+        - sequence: 未启用特性, 设为默认值即可.
+
+5. 将上一步的到的 input 列表放入 my_tx 的 inputs 字段.
+6. 根据所需的交易输出, 构造多个 `%Bitcoin.Protocol.Types.TxOutput{}` 结构体. 该结构体有以下字段:
+
+        - value: 转入金额
+        - pk_script: 锁定脚本
+
+        最为常见的转账是使用 P2PKH 脚本. 按照 BSV 的升级路线图, 更多的脚本功能会逐渐开放.
+
+7. 现在, my_tx 就已构造完成了. 但想要作为一个合法的交易广播到网络中, 还需要以下步骤:
+
+        - [如何计算手续费](#如何计算手续费)
+        - [如何签名交易](#如何签名交易)
 
 
 # 主要功能

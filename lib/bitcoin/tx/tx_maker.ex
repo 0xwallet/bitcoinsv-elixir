@@ -9,20 +9,62 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Script
   alias Bitcoin.Protocol.Types.VarInteger
 
-  @sequence 4294967295
-  @fee_per_byte 1
 
-  def get_utxos_from_bitindex(addr) do
-    {:ok, data} = SvApi.Bitindex.utxos(addr)
-    utxos = for d <- data do
-      %Utxo{
-        hash: d["txid"] |> Binary.from_hex() |> Binary.reverse(),
-        index: d["vout"],
-        value: d["value"],
-        script_pubkey: d["scriptPubKey"] |> Binary.from_hex()
-      }
+  defmodule Resource do
+    def utxos(addr) do
+      {:ok, data} = SvApi.Bitindex.utxos(addr)
+      utxos = for d <- data do
+        %Utxo{
+          hash: d["txid"] |> Binary.from_hex() |> Binary.reverse(),
+          index: d["vout"],
+          value: d["value"],
+          script_pubkey: d["scriptPubKey"] |> Binary.from_hex()
+        }
+      end
+      utxos
     end
-    utxos
+  end
+
+
+  use GenServer
+
+  def new(privkey, from, to, value) do
+    caller = self()
+    GenServer.start(__MODULE__, %{
+      caller: caller,
+      privkey: privkey,
+      from: from,
+      to: to,
+      value: value
+    })
+  end
+
+  def init(params) do
+    state = %{
+      fee_per_byte: 1,
+      swquence: 0xffffffff,
+      utxos: [],
+      balance: 0,
+      resource: Resource,
+    } |> Map.merge(params)
+
+    send(self(), :get_utxos)
+    {:ok, state}
+  end
+
+  def handle_info(:get_utxos, state) do
+    utxos = state.resource.utxos(state.from)
+
+    balance = sum_of_utxos(utxos)
+
+    send(state.caller, {:balance, balance})
+    send(self(), :make_tx)
+
+    {:noreply, %{state | utxos: utxos, balance: balance}}
+  end
+
+  def handle_info(:make_tx, state) do
+
   end
 
   defp sum_of_utxos(list) do

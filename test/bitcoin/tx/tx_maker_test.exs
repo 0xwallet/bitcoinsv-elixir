@@ -214,6 +214,23 @@ defmodule Bitocin.Tx.TxMakerTest do
     assert output_block == TxMaker.construct_output_block(outputs)
   end
 
+  test "construct_input_block" do
+    input_block = [
+      %TxInput{
+        previous_output: %Outpoint{
+          hash: <<136, 120, 57, 157, 131, 236, 37, 198, 39, 207, 191,
+            117, 63, 249, 202, 54, 2, 55, 62, 172, 67, 122, 178, 103,
+            97, 84, 163, 194, 218, 35, 173, 243>>,
+          index: 1
+        },
+        sequence: 4294967295,
+        signature_script: ""
+      }
+    ]
+    unspents = @unspents
+    assert input_block == TxMaker.construct_input_block(unspents)
+  end
+
   test "Test Create Signed Transaction" do
     outputs = [
       {"n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi", 50000},

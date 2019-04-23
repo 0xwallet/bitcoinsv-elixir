@@ -151,10 +151,11 @@ defmodule Bitcoin.Tx.TxMaker do
     %{tx | inputs: inputs}
   end
 
+  @sequence 0xffffffff
   def utxo_to_input(u = %Utxo{}) do
     outpoint = %Outpoint{
       hash: u.hash,
-      index: u.vout
+      index: u.index
     }
     %TxInput{
       previous_output: outpoint,
@@ -176,14 +177,14 @@ defmodule Bitcoin.Tx.TxMaker do
 
     lock_time = 0
 
-    sequence = 0xffffffff
-
     hash_type = 0x41
 
     output_block = construct_output_block(outputs)
 
+    input_block = construct_input_block(unspents)
+
     %Messages.Tx{
-      inputs: [],
+      inputs: input_block,
       outputs: output_block,
       version: 1,
       lock_time: 0,
@@ -191,6 +192,9 @@ defmodule Bitcoin.Tx.TxMaker do
   end
 
   @doc """
+  outputs = [
+    {address, value} ...
+  ]
   return [
     %Output{} ...
   ]
@@ -199,4 +203,17 @@ defmodule Bitcoin.Tx.TxMaker do
     # IO.inspect outputs, label: 1
     Enum.map(outputs, &avp_to_output/1)
   end
+
+  @doc """
+  inputs = [
+    %Utxo{} ...
+  ]
+  return [
+    %Input{} ...
+  ]
+  """
+  def construct_input_block(utxos) do
+    Enum.map(utxos, &utxo_to_input/1)
+  end
+
 end

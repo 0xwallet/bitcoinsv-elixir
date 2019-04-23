@@ -9,6 +9,7 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Script
   alias Bitcoin.Protocol.Types.VarInteger
   alias Bitcoin.Util
+  alias Bitcoin.Key
 
 
   defmodule Resource do
@@ -131,6 +132,7 @@ defmodule Bitcoin.Tx.TxMaker do
   end
 
   def avp_to_output({addr, value}) do
+    # IO.inspect addr, label: 2
     %TxOutput{
       value: value,
       pk_script: address_to_pk_script(addr)
@@ -161,6 +163,7 @@ defmodule Bitcoin.Tx.TxMaker do
   end
 
   def address_to_public_key_hash(addr) do
+    # IO.inspect addr, label: 3
     {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)
     pubkeyhash
   end
@@ -168,8 +171,6 @@ defmodule Bitcoin.Tx.TxMaker do
   def create_p2pkh_transaction(priv, unspents, outputs) do
 
     pub = Key.privkey_to_pubkey(priv)
-
-    pkscript = address_to_pk_script(pub)
 
     version = 1
 
@@ -180,6 +181,13 @@ defmodule Bitcoin.Tx.TxMaker do
     hash_type = 0x41
 
     output_block = construct_output_block(outputs)
+
+    %Messages.Tx{
+      inputs: [],
+      outputs: output_block,
+      version: 1,
+      lock_time: 0,
+    }
   end
 
   @doc """
@@ -188,6 +196,7 @@ defmodule Bitcoin.Tx.TxMaker do
   ]
   """
   def construct_output_block(outputs) do
+    # IO.inspect outputs, label: 1
     Enum.map(outputs, &avp_to_output/1)
   end
 end

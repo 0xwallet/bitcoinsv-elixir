@@ -2,6 +2,7 @@ defmodule Bitocin.Tx.TxMakerTest do
   alias Bitcoin.Tx.TxMaker
   alias Bitcoin.Protocol.Messages
   alias Bitcoin.Protocol.Types.TxInput
+  alias Bitcoin.Protocol.Types.TxOutput
   alias Bitcoin.Protocol.Types.Outpoint
   alias Bitcoin.Tx.Utxo
 
@@ -180,14 +181,26 @@ defmodule Bitocin.Tx.TxMakerTest do
     outputs = [
       {"n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi", 50000},
       {"mtrNwJxS1VyHYn3qBY1Qfsm3K3kh1mGRMS", 83658760}
-    ]
+    ] |> Enum.map(&TxMaker.avp_to_output/1)
 
     messages = [
       {"hello", 0},
       {"there", 0}
     ]
 
+    output_block = "50c30000000000001976a914e7c1345fc8f87c68170b3aa798a956c2fe6a9eff88ac0888fc04000000001976a91492461bde6283b461ece7ddf4dbf1e0a48bd113d888ac"
+
     inputs1 = Messages.Tx.parse(final).inputs
-    assert inputs1 == inputs
+    # assert inputs1 == inputs
+
+    outputs1 = Messages.Tx.parse(final).outputs
+    assert outputs1 = outputs
+
+    # "bitsv testcase: create signed transaction"
+
+    privkey = "5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s" |> Binary.from_hex()
+
+    tx = TxMaker.create_p2pkh_transaction(privkey, unspents, outputs)
+    assert final == Messages.Tx.serialize(tx)
   end
 end

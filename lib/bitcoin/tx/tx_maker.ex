@@ -126,13 +126,15 @@ defmodule Bitcoin.Tx.TxMaker do
   end
 
   defp add_outputs(tx, avps) do
-    outputs = for {addr, value} <- avps do
-      %TxOutput{
-        value: value,
-        pk_script: address_to_pk_script(addr)
-      }
-    end
+    outputs = Enum.map(avps, &avp_to_output/1)
     %{tx | outputs: outputs}
+  end
+
+  def avp_to_output({addr, value}) do
+    %TxOutput{
+      value: value,
+      pk_script: address_to_pk_script(addr)
+    }
   end
 
   def address_to_pk_script(addr) do
@@ -161,5 +163,9 @@ defmodule Bitcoin.Tx.TxMaker do
   def address_to_public_key_hash(addr) do
     {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)
     pubkeyhash
+  end
+
+  def create_p2pkh_transaction(priv, unspents, outputs) do
+
   end
 end

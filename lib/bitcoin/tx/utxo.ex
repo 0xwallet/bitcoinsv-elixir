@@ -3,7 +3,7 @@ defmodule Bitcoin.Tx.Utxo do
     :script_pubkey,
     :hash,
     :value,
-    :index
+    :index,
   ]
 
 end

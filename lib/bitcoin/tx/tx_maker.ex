@@ -8,6 +8,7 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Tx.Utxo
   alias Bitcoin.Script
   alias Bitcoin.Protocol.Types.VarInteger
+  alias Bitcoin.Util
 
 
   defmodule Resource do
@@ -15,7 +16,7 @@ defmodule Bitcoin.Tx.TxMaker do
       {:ok, data} = SvApi.Bitindex.utxos(addr)
       utxos = for d <- data do
         %Utxo{
-          hash: d["txid"] |> Binary.from_hex() |> Binary.reverse(),
+          hash: d["txid"] |> Util.from_rpc_hex(),
           index: d["vout"],
           value: d["value"],
           script_pubkey: d["scriptPubKey"] |> Binary.from_hex()

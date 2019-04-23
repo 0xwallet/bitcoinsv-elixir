@@ -8,11 +8,11 @@ defmodule Bitcoin.Protocol.Types.Outpoint do
     index: non_neg_integer
   }
 
-  defimpl Inspect, for: __MODULE__ do
-    def inspect(data, _opts) do
-      "%Outpoint{ ##{data.index} hash: #{data.hash |> Base.encode16} }"
-    end
-  end
+  # defimpl Inspect, for: __MODULE__ do
+  #   def inspect(data, _opts) do
+  #     "%Outpoint{ ##{data.index} hash: #{data.hash |> Base.encode16} }"
+  #   end
+  # end
 
   @spec parse_stream(binary) :: {t, binary}
   def parse_stream(<<hash::bytes-size(32), index::unsigned-little-integer-size(32), remainder::binary>>) do

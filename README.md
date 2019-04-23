@@ -123,6 +123,33 @@
 
 这里需要注意, 当使用第三方 api 的时候, 例如 Bitindex, 它需要我们主动请求, 才会返回 utxo 数据. 假设这时用户进行充值, 而我们没有主动去获取最新的 utxo, 那么显示的用户余额就是滞后的, 可能导致用户无法转账. 所以, 还需要使用能够实时推送交易的 api, 例如 BitSocket, 来告知服务器用户的 utxo 已发生变化.
 
+**例子:**
+
+```ex
+alias Bitcoin.Tx.TxMaker
+alias Bitcoin.Key
+alias Bitcoin.Script
+
+priv = Binary.from_hex("c28a9f80738f770d527803a566cf6fc3edf6cea586c4fc4a5223a5ad797e1ac3")
+
+pub = Key.privkey_to_pubkey(priv)
+
+pkscript = TxMaker.address_to_pk_script(pub)
+
+script_code = [:OP_DUP, :OP_HASH160, pubkeyhash, :OP_EQUALVERIFY, :OP_CHECKSIG]
+
+script_bin = Script.to_binary(script_code)
+
+version = 1
+
+lock_time = 0
+
+sequence = 0xffffffff
+
+hash_type = 0x41
+
+...未完
+```
 
 # 主要功能
 

@@ -8,6 +8,20 @@ defmodule Bitocin.Tx.TxMakerTest do
 
   use ExUnit.Case
 
+  @unspents [
+    %Utxo{
+      value: 83727960,
+      script_pubkey: "76a91492461bde6283b461ece7ddf4dbf1e0a48bd113d888ac" |> Binary.from_hex(),
+      hash: "f3ad23dac2a3546167b27a43ac3e370236caf93f75bfcf27c625ec839d397888" |> Bitcoin.Util.from_rpc_hex(),
+      index: 1
+    }
+  ]
+
+  @outputs [
+    {"n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi", 50000},
+    {"mtrNwJxS1VyHYn3qBY1Qfsm3K3kh1mGRMS", 83658760}
+  ] |> Enum.map(&TxMaker.avp_to_output/1)
+
   @utxos [
     %Bitcoin.Tx.Utxo{
       hash: <<224, 31, 249, 224, 107, 185, 250, 221, 188, 228, 110, 66, 46, 171,
@@ -156,32 +170,15 @@ defmodule Bitocin.Tx.TxMakerTest do
           index: 1
         },
         sequence: 0xffffffff,
-        signature_script: <<71, 48, 68, 2, 32, 69, 183, 67, 219, 170, 170, 44, 209, 239, 11, 145, 52, 111,
-        86, 68, 227, 45, 199, 12, 222, 5, 9, 27, 55, 98, 212, 202, 187, 110, 189, 113,
-        26, 2, 32, 116, 70, 16, 86, 194, 110, 254, 172, 11, 68, 142, 127, 167, 105,
-        119, 61, 214, 228, 67, 108, 222, 80, 92, 143, 108, 166, 48, 62, 254, 49, 240,
-        149, 1, 65, 4, 61, 92, 40, 117, 201, 189, 17, 104, 117, 167, 26, 93, 182, 76,
-        255, 203, 19, 57, 107, 22, 61, 3, 155, 29, 147, 39, 130, 72, 145, 128, 67, 52,
-        118, 164, 53, 42, 42, 221, 0, 235, 176, 213, 201, 76, 81, 91, 114, 235, 16,
-        241, 253, 143, 63, 3, 180, 47, 74, 43, 37, 91, 252, 154, 169, 227>>
+        signature_script: "473044022045b743dbaaaa2cd1ef0b91346f5644e32dc70cde05091b3762d4cabb6ebd711a022074461056c26efeac0b448e7fa769773dd6e4436cde505c8f6ca6303efe31f0950141043d5c2875c9bd116875a71a5db64cffcb13396b163d039b1d932782489180433476a4352a2add00ebb0d5c94c515b72eb10f1fd8f3f03b42f4a2b255bfc9aa9e3" |> Binary.from_hex()
       }
     ]
 
     input_block = "8878399d83ec25c627cfbf753ff9ca3602373eac437ab2676154a3c2da23adf3010000008a473044022045b743dbaaaa2cd1ef0b91346f5644e32dc70cde05091b3762d4cabb6ebd711a022074461056c26efeac0b448e7fa769773dd6e4436cde505c8f6ca6303efe31f0950141043d5c2875c9bd116875a71a5db64cffcb13396b163d039b1d932782489180433476a4352a2add00ebb0d5c94c515b72eb10f1fd8f3f03b42f4a2b255bfc9aa9e3ffffffff" |> Binary.from_hex()
 
-    unspents = [
-      %Utxo{
-        value: 83727960,
-        script_pubkey: "76a91492461bde6283b461ece7ddf4dbf1e0a48bd113d888ac" |> Binary.from_hex(),
-        hash: "f3ad23dac2a3546167b27a43ac3e370236caf93f75bfcf27c625ec839d397888" |> Bitcoin.Util.from_rpc_hex(),
-        index: 1
-      }
-    ]
+    unspents = @unspents
 
-    outputs = [
-      {"n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi", 50000},
-      {"mtrNwJxS1VyHYn3qBY1Qfsm3K3kh1mGRMS", 83658760}
-    ] |> Enum.map(&TxMaker.avp_to_output/1)
+    outputs = @outputs
 
     messages = [
       {"hello", 0},
@@ -190,17 +187,25 @@ defmodule Bitocin.Tx.TxMakerTest do
 
     output_block = "50c30000000000001976a914e7c1345fc8f87c68170b3aa798a956c2fe6a9eff88ac0888fc04000000001976a91492461bde6283b461ece7ddf4dbf1e0a48bd113d888ac"
 
-    inputs1 = Messages.Tx.parse(final).inputs
-    # assert inputs1 == inputs
+    {input, _} = TxInput.parse_stream(input_block)
+    assert inputs == [input]
 
     outputs1 = Messages.Tx.parse(final).outputs
     assert outputs1 = outputs
+  end
 
+  test "Test Create Signed Transaction" do
+    outputs = @outputs
+    unspents = @unspents
     # "bitsv testcase: create signed transaction"
 
-    privkey = "5KHxtARu5yr1JECrYGEA2YpCPdh1i9ciEgQayAF8kcqApkGzT9s" |> Binary.from_hex()
+    privkey = "c28a9f80738f770d527803a566cf6fc3edf6cea586c4fc4a5223a5ad797e1ac3" |> Binary.from_hex()
 
     tx = TxMaker.create_p2pkh_transaction(privkey, unspents, outputs)
     assert final == Messages.Tx.serialize(tx)
+  end
+
+  defp sig_script_from_inputs([h|_]) do
+    h.signature_script
   end
 end

@@ -167,5 +167,27 @@ defmodule Bitcoin.Tx.TxMaker do
 
   def create_p2pkh_transaction(priv, unspents, outputs) do
 
+    pub = Key.privkey_to_pubkey(priv)
+
+    pkscript = address_to_pk_script(pub)
+
+    version = 1
+
+    lock_time = 0
+
+    sequence = 0xffffffff
+
+    hash_type = 0x41
+
+    output_block = construct_output_block(outputs)
+  end
+
+  @doc """
+  return [
+    %Output{} ...
+  ]
+  """
+  def construct_output_block(outputs) do
+    Enum.map(outputs, &avp_to_output/1)
   end
 end

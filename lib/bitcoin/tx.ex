@@ -9,8 +9,6 @@ defmodule Bitcoin.Tx do
   use Bitcoin.Common
 
   alias Bitcoin.Protocol.Messages
-  alias Bitcoin.Protocol.Types.TxInput
-  alias Bitcoin.Protocol.Types.Outpoint
   alias Bitcoin.Tx.Sighash
 
   require Logger
@@ -38,15 +36,6 @@ defmodule Bitcoin.Tx do
       |> Bitcoin.Util.double_sha256
   end
 
-  @doc """
-  Known utxos, output value, and destination address,
-  making a signed tx.
-  """
-  def make(utxos, addr_value_pairs, fee_rate \\ @fee_rate) do
-    %Messages.Tx{
-
-    }
-  end
 
   @doc """
   Sign a transaction.

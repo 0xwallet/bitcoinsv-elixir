@@ -9,4 +9,10 @@ defmodule Bitocin.Tx.TxMakerTest do
 
     assert pubkeyhash == TxMaker.address_to_public_key_hash(addr)
   end
+
+  test "address_to_pk_script" do
+    addr = "18WqBk5qDRXuwmphgg2oX5SpEWpV8uH1gk"
+    pks = TxMaker.address_to_pk_script(addr)
+    assert pks == Binary.from_hex("76a914526d2a97902d5dc95b6060a54dbcb74a587c818c88ac")
+  end
 end

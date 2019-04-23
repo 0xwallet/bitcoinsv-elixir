@@ -1,12 +1,9 @@
 defmodule Bitcoin.Tx.Utxo do
   defstruct [
-    :address,
-    :amount,
-    :confirmations,
-    :height,
-    :scriptPubKey,
-    :txid,
+    :script_pubkey,
+    :hash,
     :value,
-    :vout # output index
+    :index
   ]
+
 end

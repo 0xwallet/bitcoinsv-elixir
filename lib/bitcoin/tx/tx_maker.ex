@@ -7,8 +7,10 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Base58Check
   alias Bitcoin.Tx.Utxo
   alias Bitcoin.Script
+  alias Bitcoin.Protocol.Types.VarInteger
 
   @sequence 4294967295
+  @fee_per_byte 1
 
   def get_utxos_from_bitindex(addr) do
     {:ok, data} = SvApi.Bitindex.utxos(addr)
@@ -17,10 +19,16 @@ defmodule Bitcoin.Tx.TxMaker do
         hash: d["txid"] |> Binary.from_hex() |> Binary.reverse(),
         index: d["vout"],
         value: d["value"],
-        script_pubkey: d["scriptPubKey"]
+        script_pubkey: d["scriptPubKey"] |> Binary.from_hex()
       }
     end
     utxos
+  end
+
+  defp sum_of_utxos(list) do
+    for %{value: v} <- list do
+      v
+    end |> Enum.sum()
   end
 
   @doc """
@@ -38,17 +46,40 @@ defmodule Bitcoin.Tx.TxMaker do
       v
     end |> Enum.sum()
 
-    utxos_value = for %{value: v} <- utxos do
-      v
-    end |> Enum.sum()
+    output_count = length(avps)
 
-    if outputs_value >= utxos_value do
-      raise("Balance not enough.")
-    end
+    spending_utxos = get_enough_utxos(utxos, outputs_value)
 
     %Messages.Tx{version: 1, lock_time: 0}
     |> add_outputs(avps)
     |> add_inputs(utxos)
+  end
+
+  def get_enough_utxos(utxos, value) do
+    utxos
+    |> Enum.sort(&(&1.value >= &2.value))
+    |> Enum.reduce_while({0, []}, fn x, {sum, us} ->
+      if sum > value, do: {:halt, {sum, us}}, else: {:cont, {sum + x.value, [x | us]} }
+    end)
+    |> elem(1)
+    |> check_if_enough(value)
+  end
+
+  defp check_if_enough(utxos, value) do
+    if sum_of_utxos(utxos) > value do
+      utxos
+    else
+      raise("Balance not enough.")
+    end
+  end
+
+  def estimated_size(n_in, n_out) do
+    4 +  # version
+    n_in * 148  # input compressed
+    + byte_size(VarInteger.serialize(n_in))
+    + n_out * 34  # excluding op_return outputs, dealt with separately
+    + byte_size(VarInteger.serialize(n_out))
+    + 4  # time lock
   end
 
   defp add_outputs(tx, avps) do

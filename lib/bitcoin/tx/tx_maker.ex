@@ -11,7 +11,6 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Util
   alias Bitcoin.Key
   alias Bitcoin.Crypto
-  alias Bitcoin.DERSig
 
 
   defmodule Resource do
@@ -27,6 +26,10 @@ defmodule Bitcoin.Tx.TxMaker do
       end
       utxos
     end
+  end
+
+  defp broadcast(bin) do
+    bin |> Binary.to_hex() |> SvApi.Bitindex.broadcast()
   end
 
 
@@ -175,6 +178,7 @@ defmodule Bitcoin.Tx.TxMaker do
 
   def create_p2pkh_transaction(priv, unspents, outputs) do
     pubkey = Key.privkey_to_pubkey(priv)
+    scriptcode =
 
     output_block = construct_output_block(outputs)
 
@@ -188,7 +192,7 @@ defmodule Bitcoin.Tx.TxMaker do
     }
     data = Messages.Tx.serialize(tx) <> @hash_type
 
-    raw_sig = Crypto.sign(priv, data) |> IO.inspect()
+    raw_sig = Crypto.sign(priv, data)
 
     signature = raw_sig <> @hash_type
 
@@ -204,7 +208,7 @@ defmodule Bitcoin.Tx.TxMaker do
 
     %Messages.Tx{ tx |
       inputs: input_block1
-    }
+    } |> Messages.Tx.serialize()
   end
 
 
@@ -231,6 +235,20 @@ defmodule Bitcoin.Tx.TxMaker do
   """
   def construct_input_block(utxos) do
     Enum.map(utxos, &utxo_to_input/1)
+  end
+
+  @doc """
+  This function just for testing.
+  send all balance back to sender, just minus fee.
+  """
+  def quick_send() do
+    priv = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
+    addr = "1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH"
+    utxos = Resource.utxos(addr)
+    outputs = [
+      {addr, hd(utxos).value - 230}
+    ]
+    create_p2pkh_transaction(priv, utxos, outputs)
   end
 
 

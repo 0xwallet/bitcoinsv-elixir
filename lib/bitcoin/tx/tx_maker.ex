@@ -10,7 +10,8 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Protocol.Types.VarInteger
   alias Bitcoin.Util
   alias Bitcoin.Key
-  alias Bitcoin.Crypto
+
+  import Bitcoin.Crypto
 
 
   defmodule Resource do
@@ -168,62 +169,85 @@ defmodule Bitcoin.Tx.TxMaker do
     }
   end
 
+  def prepare_utxo_for_sign(u = %Utxo{}) do
+    %{
+      script: u.script_pubkey,
+      script_len: byte_size(u.script_pubkey) |> VarInteger.serialize(),
+      txid: u.hash,
+      txindex: <<u.index::size(32)-little>>,
+      amount: <<u.value::size(64)-little>>,
+      utxo: u
+    }
+  end
+
   def address_to_public_key_hash(addr) do
     # IO.inspect addr, label: 3
     {:ok, <<_prefix::bytes-size(1), pubkeyhash::binary>>} = Base58Check.decode(addr)
     pubkeyhash
   end
 
-  @hash_type <<0x41>>
+  @hash_type <<0x41::size(32)-little>>
+  @sequence <<0xffffffff::size(32)-little>>
 
-  def create_p2pkh_transaction(priv, unspents, outputs) do
+  def create_p2pkh_transaction(priv, utxos, avps) do
     pubkey = Key.privkey_to_pubkey(priv)
-    scriptcode =
+    scriptcode = Key.privkey_to_scriptcode(priv)
+    scriptcode_len = VarInteger.serialize(byte_size(scriptcode))
 
-    output_block = construct_output_block(outputs)
+    outputs =
+      for x <- avps do
+        avp_to_output(x)
+      end
 
-    input_block = construct_input_block(unspents)
+    output_block = for x <- outputs, into: <<>> do
+      TxOutput.serialize(x)
+    end
+
+    unspents = Enum.map(utxos, &prepare_utxo_for_sign/1)
+    lock_time = <<0::size(32)>>
 
     tx = %Messages.Tx{
-      inputs: input_block,
-      outputs: output_block,
+      outputs: outputs,
       version: 1,
       lock_time: 0,
     }
-    data = Messages.Tx.serialize(tx) <> @hash_type
 
-    raw_sig = Crypto.sign(priv, data)
+    hashPrevouts = double_sha256(for x <- unspents, into: <<>>, do: x.txid <> x.txindex)
+    hashSequence = double_sha256(for _ <- unspents, into: <<>>, do: @sequence)
+    hashOutputs = double_sha256(output_block)
 
-    signature = raw_sig <> @hash_type
+    inputs = for txin <- unspents do
+      to_be_signed = [
+        <<1::size(32)-little>>,
+        hashPrevouts,
+        hashSequence,
+        txin.txid,
+        txin.txindex,
+        scriptcode_len,
+        scriptcode,
+        txin.amount,
+        @sequence,
+        hashOutputs,
+        lock_time,
+        @hash_type
+      ] |> IO.iodata_to_binary()
 
-    sig_script =
-      <<byte_size(signature)::little>> <>
-      signature <>
-      <<byte_size(pubkey)::little>> <>
-      pubkey
+      signature = sign(priv, to_be_signed) <> <<0x41>>
 
-    input_block1 = Enum.map(input_block, fn x ->
-      Map.put(x, :signature_script, sig_script)
-    end)
+      sig_script =
+        <<byte_size(signature)::little>> <>
+        signature <>
+        <<byte_size(pubkey)::little>> <>
+        pubkey
+
+      %TxInput{ utxo_to_input(txin.utxo) | signature_script: sig_script}
+    end
 
     %Messages.Tx{ tx |
-      inputs: input_block1
-    } |> Messages.Tx.serialize()
+      inputs: inputs
+    }
   end
 
-
-  @doc """
-  outputs = [
-    {address, value} ...
-  ]
-  return [
-    %Output{} ...
-  ]
-  """
-  def construct_output_block(outputs) do
-    # IO.inspect outputs, label: 1
-    Enum.map(outputs, &avp_to_output/1)
-  end
 
   @doc """
   inputs = [
@@ -249,7 +273,11 @@ defmodule Bitcoin.Tx.TxMaker do
       {addr, hd(utxos).value - 230}
     ]
     create_p2pkh_transaction(priv, utxos, outputs)
+    |> Messages.Tx.serialize()
+    |> broadcast()
   end
+
+
 
 
 end

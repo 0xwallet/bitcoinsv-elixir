@@ -197,62 +197,62 @@ defmodule Bitocin.Tx.TxMakerTest do
     assert outputs1 = outputs
   end
 
-  test "construct output block" do
-    output_block = [
-      %TxOutput{
-        pk_script: <<118, 169, 20, 231, 193, 52, 95, 200, 248, 124, 104, 23, 11, 58,
-          167, 152, 169, 86, 194, 254, 106, 158, 255, 136, 172>>,
-        value: 50000
-      },
-      %TxOutput{
-        pk_script: <<118, 169, 20, 146, 70, 27, 222, 98, 131, 180, 97, 236, 231,
-          221, 244, 219, 241, 224, 164, 139, 209, 19, 216, 136, 172>>,
-        value: 83658760
-      }
-    ]
-    outputs = @outputs
+  # test "construct output block" do
+  #   output_block = [
+  #     %TxOutput{
+  #       pk_script: <<118, 169, 20, 231, 193, 52, 95, 200, 248, 124, 104, 23, 11, 58,
+  #         167, 152, 169, 86, 194, 254, 106, 158, 255, 136, 172>>,
+  #       value: 50000
+  #     },
+  #     %TxOutput{
+  #       pk_script: <<118, 169, 20, 146, 70, 27, 222, 98, 131, 180, 97, 236, 231,
+  #         221, 244, 219, 241, 224, 164, 139, 209, 19, 216, 136, 172>>,
+  #       value: 83658760
+  #     }
+  #   ]
+  #   outputs = @outputs
 
-    assert output_block == TxMaker.construct_output_block(outputs)
-  end
+  #   assert output_block == TxMaker.construct_output_block(outputs)
+  # end
 
-  test "construct_input_block" do
-    input_block = [
-      %TxInput{
-        previous_output: %Outpoint{
-          hash: <<136, 120, 57, 157, 131, 236, 37, 198, 39, 207, 191,
-            117, 63, 249, 202, 54, 2, 55, 62, 172, 67, 122, 178, 103,
-            97, 84, 163, 194, 218, 35, 173, 243>>,
-          index: 1
-        },
-        sequence: 4294967295,
-        signature_script: ""
-      }
-    ]
-    unspents = @unspents
-    assert input_block == TxMaker.construct_input_block(unspents)
-  end
+  # test "construct_input_block" do
+  #   input_block = [
+  #     %TxInput{
+  #       previous_output: %Outpoint{
+  #         hash: <<136, 120, 57, 157, 131, 236, 37, 198, 39, 207, 191,
+  #           117, 63, 249, 202, 54, 2, 55, 62, 172, 67, 122, 178, 103,
+  #           97, 84, 163, 194, 218, 35, 173, 243>>,
+  #         index: 1
+  #       },
+  #       sequence: 4294967295,
+  #       signature_script: ""
+  #     }
+  #   ]
+  #   unspents = @unspents
+  #   assert input_block == TxMaker.construct_input_block(unspents)
+  # end
 
-  test "Test Create Signed Transaction" do
-    outputs = [
-      {"1PdvVPTzXmo4cSs68HctLUxAdW917UZtC8", 10000},
-      {"1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 12578070}
-    ]
-    unspents = [
-      %Utxo{
-        value: 12588296,
-        script_pubkey: "76a914926f915bd7285586ae795ba40461d3d4ae53760888ac" |> Binary.from_hex(),
-        hash: "1f2de5350418ccca6234ccadf692035dbf057cf9d832d0e8f54fa2edbb6d00f6" |> Bitcoin.Util.from_rpc_hex(),
-        index: 0
-      }
-    ]
-    final = "0100000001f6006dbbeda24ff5e8d032d8f97c05bf5d0392f6adcc3462cacc180435e52d1f000000006a473044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a24121024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7ffffffff0210270000000000001976a914f84e64817bcb214871a90d0dce34685377cbf48788ac16edbf00000000001976a914926f915bd7285586ae795ba40461d3d4ae53760888ac00000000"
-    # "bitsv testcase: create signed transaction"
+  # test "Test Create Signed Transaction" do
+  #   outputs = [
+  #     {"1PdvVPTzXmo4cSs68HctLUxAdW917UZtC8", 10000},
+  #     {"1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 12578070}
+  #   ]
+  #   unspents = [
+  #     %Utxo{
+  #       value: 12588296,
+  #       script_pubkey: "76a914926f915bd7285586ae795ba40461d3d4ae53760888ac" |> Binary.from_hex(),
+  #       hash: "1f2de5350418ccca6234ccadf692035dbf057cf9d832d0e8f54fa2edbb6d00f6" |> Bitcoin.Util.from_rpc_hex(),
+  #       index: 0
+  #     }
+  #   ]
+  #   final = "0100000001f6006dbbeda24ff5e8d032d8f97c05bf5d0392f6adcc3462cacc180435e52d1f000000006a473044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a24121024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7ffffffff0210270000000000001976a914f84e64817bcb214871a90d0dce34685377cbf48788ac16edbf00000000001976a914926f915bd7285586ae795ba40461d3d4ae53760888ac00000000"
+  #   # "bitsv testcase: create signed transaction"
 
-    privkey = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
+  #   privkey = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
 
-    tx = TxMaker.create_p2pkh_transaction(privkey, unspents, outputs)
-    assert Util.print(final, "final") == Util.print(Messages.Tx.serialize(tx) |> Binary.to_hex(), "mytx")
-  end
+  #   tx = TxMaker.create_p2pkh_transaction(privkey, unspents, outputs)
+  #   assert Util.print(final, "final") == Util.print(Messages.Tx.serialize(tx) |> Binary.to_hex(), "mytx")
+  # end
 
   defp sig_script_from_inputs([h|_]) do
     h.signature_script

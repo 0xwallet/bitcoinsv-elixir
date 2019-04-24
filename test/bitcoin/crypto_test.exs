@@ -15,4 +15,8 @@ defmodule Bitcoin.CryptoTest do
     assert true == Crypto.verify(Crypto.sign(priv, message), message, pubkey)
   end
 
+  test "double sha256" do
+    assert Crypto.double_sha256("") == "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456" |> Binary.from_hex()
+  end
+
 end

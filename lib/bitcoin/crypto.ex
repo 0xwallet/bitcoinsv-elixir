@@ -8,6 +8,12 @@ defmodule Bitcoin.Crypto do
   def sha1(bin), do: :crypto.hash(:sha, bin)
   def sha256(bin), do: :crypto.hash(:sha256, bin)
 
+  def double_sha256(x) do
+    x
+    |> sha256()
+    |> sha256()
+  end
+
   @doc """
   auto do sha256 hash before sign.
   """

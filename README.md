@@ -736,7 +736,79 @@ bitcoinsv-elixir 解码后的格式:
 }
 ```
 
-进过对比, 我们发现只有 `signature_script` 部分存在差异.
+进过对比, 我们发现只有 `signature_script` 部分存在差异. 在P2PKH 交易中, signature_script 由三部分组成: 1.签名 2.sighash_type 3.public_key. 上述两个交易中的三部分拆分出来得到:
+
+结果1:
+```
+1. 47
+3044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a2
+2. 41
+3. 21024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7
+```
+
+结果2:
+```
+1. 48
+3045022100e85678e98cac4040f441831ea246a7ba9522c69d6a29c41ffccbd71364823c8b02200a999bc6eb0b57c12fb79317fb76327a8d4a74533542cb6a650141747ed9de7a
+2. 41
+3. 21024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7
+``
+
+可以看出, sighash_type 和 public_key 部分是一样的. 只有签名部分有差异.
+
+Bitcoin 的签名使用的是 DER encoding, 所以先使用 `Bitcoin.DERSig.parse/1` 解码一下签名:
+
+结果1:
+```ex
+%Bitcoin.DERSig{
+  length: 68,
+  r: <<100, 209, 52, 66, 204, 71, 213, 90, 221, 73, 137, 138, 140, 97, 138, 96,
+    29, 206, 17, 13, 103, 181, 107, 102, 84, 254, 193, 176, 233, 91, 45, 19>>,
+  r_type: 2,
+  s: <<21, 203, 163, 196, 176, 240, 253, 54, 145, 33, 146, 221, 117, 236, 114,
+    201, 197, 97, 60, 155, 208, 5, 68, 180, 15, 133, 255, 120, 232, 244, 54,
+    162>>,
+  s_type: 2,
+  type: 48
+}
+```
+
+结果2:
+```ex
+%Bitcoin.DERSig{
+  length: 69,
+  r: <<0, 232, 86, 120, 233, 140, 172, 64, 64, 244, 65, 131, 30, 162, 70, 167,
+    186, 149, 34, 198, 157, 106, 41, 196, 31, 252, 203, 215, 19, 100, 130, 60,
+    139>>,
+  r_type: 2,
+  s: <<10, 153, 155, 198, 235, 11, 87, 193, 47, 183, 147, 23, 251, 118, 50, 122,
+    141, 74, 116, 83, 53, 66, 203, 106, 101, 1, 65, 116, 126, 217, 222, 122>>,
+  s_type: 2,
+  type: 48
+}
+```
+
+并不能因此确认本项目中的实现是错误的, 因为 ECDSA 签名算法中会引入随机数, 所以每次签名的结果会不同.
+
+**在 bitcoinsv-elixir 中签名的方法**
+```
+alias Bitcoin.Crypto
+alias Bitcoin.Key
+
+msg = "hello"
+hashed = Crypto.sha256(msg)
+privkey = :crypto.strong_rand_bytes(64)
+pubkey = Key.privkey_to_pubkey(privkey)
+sig = Crypto.sign(privkey, hashed)
+
+# 得到sig:
+# 3045022100d8cf8ab7f2e0ff53d7bb9aedcd3fcff8f35d56733938a333696d51d46898bba10220168a3c7688966152b3aab392548630ce0c7da1bffc2227e28beadcb75bfc0eaf
+# pubkey:
+# 03864fcb0e3dfdd244ce5df56aebcf66869012752640ee3db9921cdbbfefdf10a5
+```
+
+
+
 
 # 交易构造
 

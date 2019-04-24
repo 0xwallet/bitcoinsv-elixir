@@ -9,7 +9,11 @@ defmodule Bitcoin.Crypto do
   def sha256(bin), do: :crypto.hash(:sha256, bin)
 
   def sign(priv, data) do
-    :crypto.sign(:ecdsa, :sha256, data, [priv, :secp256k1])
+    :crypto.sign(:ecdsa, :sha256, {:digest, data}, [priv, :secp256k1])
     |> DERSig.normalize()
+  end
+
+  def verify(sig, data, pubkey) do
+    :crypto.verify(:ecdsa, :sha256, {:digest, data}, sig, [pubkey, :secp256k1])
   end
 end

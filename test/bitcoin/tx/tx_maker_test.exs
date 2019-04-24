@@ -234,17 +234,24 @@ defmodule Bitocin.Tx.TxMakerTest do
 
   test "Test Create Signed Transaction" do
     outputs = [
-      {"n2eMqTT929pb1RDNuqEnxdaLau1rxy3efi", 50000},
-      {"mtrNwJxS1VyHYn3qBY1Qfsm3K3kh1mGRMS", 83658760}
+      {"1PdvVPTzXmo4cSs68HctLUxAdW917UZtC8", 10000},
+      {"1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 12578070}
     ]
-    unspents = @unspents
-    final = @final
+    unspents = [
+      %Utxo{
+        value: 12588296,
+        script_pubkey: "76a914926f915bd7285586ae795ba40461d3d4ae53760888ac" |> Binary.from_hex(),
+        hash: "1f2de5350418ccca6234ccadf692035dbf057cf9d832d0e8f54fa2edbb6d00f6" |> Bitcoin.Util.from_rpc_hex(),
+        index: 0
+      }
+    ]
+    final = "0100000001f6006dbbeda24ff5e8d032d8f97c05bf5d0392f6adcc3462cacc180435e52d1f000000006a473044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a24121024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7ffffffff0210270000000000001976a914f84e64817bcb214871a90d0dce34685377cbf48788ac16edbf00000000001976a914926f915bd7285586ae795ba40461d3d4ae53760888ac00000000"
     # "bitsv testcase: create signed transaction"
 
-    privkey = "c28a9f80738f770d527803a566cf6fc3edf6cea586c4fc4a5223a5ad797e1ac3" |> Binary.from_hex()
+    privkey = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
 
     tx = TxMaker.create_p2pkh_transaction(privkey, unspents, outputs)
-    assert Util.print(final, "final") == Util.print(Messages.Tx.serialize(tx), "mytx")
+    assert Util.print(final, "final") == Util.print(Messages.Tx.serialize(tx) |> Binary.to_hex(), "mytx")
   end
 
   defp sig_script_from_inputs([h|_]) do

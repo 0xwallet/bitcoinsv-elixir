@@ -51,7 +51,7 @@ defmodule Bitcoin.Protocol.Messages.Tx do
   @spec parse(binary) :: t
   def parse(data) do
     {struct, ""} = parse_stream(data)
-    struct
+    struct |> IO.inspect(limit: :infinity)
   end
 
   @spec serialize(t) :: binary

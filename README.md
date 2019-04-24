@@ -6,17 +6,21 @@
 
 - [模块结构介绍](#模块结构)
 - [网络相关模块](#网络模块)
-- [代码测试流程](#代码测试)
 - [比特币交易构造](#交易构造)
 - [比特币脚本](#比特币脚本)
 
-# 使用说明
+## 使用说明
 
 1. [如何安装](#如何安装)
 2. [如何查看bitcoin地址余额](#如何查看bitcoin地址余额)
 3. [如何构建交易](#如何构建交易)
 4. [如何计算手续费](#如何计算手续费)
 5. [如何签名交易](#如何签名交易)
+
+## 测试相关
+
+- [代码测试流程](#代码测试)
+- [如何测试签名](#测试签名)
 
 ## 如何安装
 
@@ -150,6 +154,7 @@ hash_type = 0x41
 
 ...未完
 ```
+
 
 # 主要功能
 
@@ -628,6 +633,110 @@ ConnectionManager GenServer 的内部状态有:
 而有一些业务代码涉及到数据库, 进程的启动和终结, 错误处理, 等等具有副作用的函数. 针对这类代码, 测试流程就更为复杂, 需要启动虚拟的数据库(或专门的测试数据库), 或者在测试开始时启动一系列的进程, 在测试结束后关闭进程. 这种测试可以被称为有状态测试.
 
 打开命令行, 在项目根目录下, 运行 "mix test" 即可开始测试.
+
+## 测试签名
+
+首先, 要确保签名算法是正确的. 最简单的方法就是找到一个比较流行的开源 bsv 钱包实现, 来签名并广播一笔交易. 然后获取到完整的签名数据, 和我们自己的实现来作对比.
+
+这里使用 https://github.com/AustEcon/bitsv 来作为对照. 首先导入我们自己的私钥. 签发一笔交易.
+
+我们得到了这笔交易: https://blockchair.com/bitcoin-sv/transaction/1a0884356fd9cdee5322b038ea20c4f7d006d20670f97aafc4aa5aadf3c62d2e
+
+raw transaction:
+```
+0100000001f6006dbbeda24ff5e8d032d8f97c05bf5d0392f6adcc3462cacc180435e52d1f000000006a473044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a24121024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7ffffffff0210270000000000001976a914f84e64817bcb214871a90d0dce34685377cbf48788ac16edbf00000000001976a914926f915bd7285586ae795ba40461d3d4ae53760888ac00000000
+```
+
+bitcoinsv-elixir 解码后的格式:
+```ex
+%Bitcoin.Protocol.Messages.Tx{
+  inputs: [
+    %Bitcoin.Protocol.Types.TxInput{
+      previous_output: %Bitcoin.Protocol.Types.Outpoint{
+        hash: <<246, 0, 109, 187, 237, 162, 79, 245, 232, 208, 50, 216, 249,
+          124, 5, 191, 93, 3, 146, 246, 173, 204, 52, 98, 202, 204, 24, 4, 53,
+          229, 45, 31>>,
+        index: 0
+      },
+      sequence: 4294967295,
+      signature_script: <<71, 48, 68, 2, 32, 100, 209, 52, 66, 204, 71, 213, 90,
+        221, 73, 137, 138, 140, 97, 138, 96, 29, 206, 17, 13, 103, 181, 107,
+        102, 84, 254, 193, 176, 233, 91, 45, 19, 2, 32, 21, 203, 163, 196, 176,
+        240, 253, 54, 145, 33, 146, 221, 117, 236, 114, 201, 197, 97, 60, 155,
+        208, 5, 68, 180, 15, 133, 255, 120, 232, 244, 54, 162, 65, 33, 2, 77,
+        169, 12, 168, 191, 120, 97, 226, 190, 230, 147, 29, 228, 88, 142, 187,
+        163, 133, 10, 26, 211, 240, 92, 205, 69, 202, 210, 221, 23, 186, 122,
+        231>>
+    }
+  ],
+  lock_time: 0,
+  outputs: [
+    %Bitcoin.Protocol.Types.TxOutput{
+      pk_script: <<118, 169, 20, 248, 78, 100, 129, 123, 203, 33, 72, 113, 169,
+        13, 13, 206, 52, 104, 83, 119, 203, 244, 135, 136, 172>>,
+      value: 10000
+    },
+    %Bitcoin.Protocol.Types.TxOutput{
+      pk_script: <<118, 169, 20, 146, 111, 145, 91, 215, 40, 85, 134, 174, 121,
+        91, 164, 4, 97, 211, 212, 174, 83, 118, 8, 136, 172>>,
+      value: 12578070
+    }
+  ],
+  version: 1
+}
+```
+
+Blockchair docoded transaction:
+```json
+{"txid":"1a0884356fd9cdee5322b038ea20c4f7d006d20670f97aafc4aa5aadf3c62d2e","hash":"1a0884356fd9cdee5322b038ea20c4f7d006d20670f97aafc4aa5aadf3c62d2e","size":225,"version":1,"locktime":0,"vin":[{"txid":"1f2de5350418ccca6234ccadf692035dbf057cf9d832d0e8f54fa2edbb6d00f6","vout":0,"scriptSig":{"asm":"3044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a2[ALL|FORKID] 024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7","hex":"473044022064d13442cc47d55add49898a8c618a601dce110d67b56b6654fec1b0e95b2d13022015cba3c4b0f0fd36912192dd75ec72c9c5613c9bd00544b40f85ff78e8f436a24121024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7"},"sequence":4294967295}],"vout":[{"value":0.0001,"n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 f84e64817bcb214871a90d0dce34685377cbf487 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a914f84e64817bcb214871a90d0dce34685377cbf48788ac","reqSigs":1,"type":"pubkeyhash","addresses":["bitcoincash:qruyueyp009jzjr34yxsmn35dpfh0jl5su6wtf3gyr"]}},{"value":0.1257807,"n":1,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 926f915bd7285586ae795ba40461d3d4ae537608 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a914926f915bd7285586ae795ba40461d3d4ae53760888ac","reqSigs":1,"type":"pubkeyhash","addresses":["bitcoincash:qzfxly2m6u59tp4w09d6gprp6022u5mkpqkwa7997y"]}}]}
+```
+
+以上是可以确定正确的数据. 接下来使用我们自己的实现, 对同样的原料进行签名, 得到的结果是:
+
+```
+0100000001f6006dbbeda24ff5e8d032d8f97c05bf5d0392f6adcc3462cacc180435e52d1f000000006b483045022100e85678e98cac4040f441831ea246a7ba9522c69d6a29c41ffccbd71364823c8b02200a999bc6eb0b57c12fb79317fb76327a8d4a74533542cb6a650141747ed9de7a4121024da90ca8bf7861e2bee6931de4588ebba3850a1ad3f05ccd45cad2dd17ba7ae7ffffffff0210270000000000001976a914f84e64817bcb214871a90d0dce34685377cbf48788ac16edbf00000000001976a914926f915bd7285586ae795ba40461d3d4ae53760888ac00000000
+```
+
+bitcoinsv-elixir 解码后的格式:
+```ex
+%Bitcoin.Protocol.Messages.Tx{
+  inputs: [
+    %Bitcoin.Protocol.Types.TxInput{
+      previous_output: %Bitcoin.Protocol.Types.Outpoint{
+        hash: <<246, 0, 109, 187, 237, 162, 79, 245, 232, 208, 50, 216, 249,
+          124, 5, 191, 93, 3, 146, 246, 173, 204, 52, 98, 202, 204, 24, 4, 53,
+          229, 45, 31>>,
+        index: 0
+      },
+      sequence: 4294967295,
+      signature_script: <<72, 48, 69, 2, 33, 0, 232, 86, 120, 233, 140, 172, 64,
+        64, 244, 65, 131, 30, 162, 70, 167, 186, 149, 34, 198, 157, 106, 41,
+        196, 31, 252, 203, 215, 19, 100, 130, 60, 139, 2, 32, 10, 153, 155, 198,
+        235, 11, 87, 193, 47, 183, 147, 23, 251, 118, 50, 122, 141, 74, 116, 83,
+        53, 66, 203, 106, 101, 1, 65, 116, 126, 217, 222, 122, 65, 33, 2, 77,
+        169, 12, 168, 191, 120, 97, 226, 190, 230, 147, 29, 228, 88, 142, 187,
+        163, 133, 10, 26, 211, 240, 92, 205, 69, 202, 210, 221, 23, 186, 122,
+        231>>
+    }
+  ],
+  lock_time: 0,
+  outputs: [
+    %Bitcoin.Protocol.Types.TxOutput{
+      pk_script: <<118, 169, 20, 248, 78, 100, 129, 123, 203, 33, 72, 113, 169,
+        13, 13, 206, 52, 104, 83, 119, 203, 244, 135, 136, 172>>,
+      value: 10000
+    },
+    %Bitcoin.Protocol.Types.TxOutput{
+      pk_script: <<118, 169, 20, 146, 111, 145, 91, 215, 40, 85, 134, 174, 121,
+        91, 164, 4, 97, 211, 212, 174, 83, 118, 8, 136, 172>>,
+      value: 12578070
+    }
+  ],
+  version: 1
+}
+```
+
+进过对比, 我们发现只有 `signature_script` 部分存在差异.
 
 # 交易构造
 

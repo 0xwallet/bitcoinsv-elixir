@@ -15,9 +15,9 @@ defmodule Bitcoin.KeyTest do
   end
 
   test "privkey to wif" do
-    p = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D" |> Binary.from_hex()
+    p = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
     wif = Key.privkey_to_wif(p)
 
-    assert "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ" == wif
+    assert "Kx83ACqTy1EVasPzY9nPecfhbRwnqS1Gpjw2nUqxkD6ATc8dBEeW" == wif
   end
 end

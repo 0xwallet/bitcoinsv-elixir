@@ -15,7 +15,19 @@ defmodule Bitcoin.Key do
   end
 
   def privkey_to_wif(priv) do
-    # mainnet
-    (<<0x80>> <> priv) |> Base58Check.encode()
+    prefix = <<0x80>> # mainnet
+    suffix = if compressed_priv?(priv) do
+      <<0x01>>
+    else
+      ""
+    end
+
+    (prefix <> priv <> suffix)
+    |> Base58Check.encode()
+  end
+
+  def compressed_priv?(priv) do
+    pub = priv |> privkey_to_pubkey()
+    byte_size(pub) == 33
   end
 end

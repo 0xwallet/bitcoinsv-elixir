@@ -174,7 +174,7 @@ defmodule Bitcoin.Tx.TxMaker do
   @hash_type <<0x41>>
 
   def create_p2pkh_transaction(priv, unspents, outputs) do
-    pubkey = Key.privkey_to_pubkey(priv) |> IO.inspect(label: "pubk")
+    pubkey = Key.privkey_to_pubkey(priv)
 
     output_block = construct_output_block(outputs)
 

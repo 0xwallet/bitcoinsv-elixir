@@ -5,6 +5,7 @@ defmodule Bitocin.Tx.TxMakerTest do
   alias Bitcoin.Protocol.Types.TxOutput
   alias Bitcoin.Protocol.Types.Outpoint
   alias Bitcoin.Tx.Utxo
+  alias Bitcoin.Util
 
   use ExUnit.Case
 
@@ -243,10 +244,11 @@ defmodule Bitocin.Tx.TxMakerTest do
     privkey = "c28a9f80738f770d527803a566cf6fc3edf6cea586c4fc4a5223a5ad797e1ac3" |> Binary.from_hex()
 
     tx = TxMaker.create_p2pkh_transaction(privkey, unspents, outputs)
-    # assert final == Messages.Tx.serialize(tx)
+    assert Util.print(final, "final") == Util.print(Messages.Tx.serialize(tx), "mytx")
   end
 
   defp sig_script_from_inputs([h|_]) do
     h.signature_script
   end
+
 end

@@ -106,4 +106,8 @@ defmodule Bitcoin.Util do
   def from_rpc_hex(b) do
     b |> Binary.from_hex() |> Binary.reverse()
   end
+
+  def print(x, label \\ "") do
+    IO.inspect x, limit: :infinity, label: label
+  end
 end

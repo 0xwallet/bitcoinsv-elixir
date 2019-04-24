@@ -13,4 +13,11 @@ defmodule Bitcoin.KeyTest do
     pubkey2 = Key.privkey_to_pubkey(privkey2)
     assert address2 == Bitcoin.Key.Public.to_address(pubkey2)
   end
+
+  test "privkey to wif" do
+    p = "0C28FCA386C7A227600B2FE50B7CAE11EC86D3BF1FBE471BE89827E19D72AA1D" |> Binary.from_hex()
+    wif = Key.privkey_to_wif(p)
+
+    assert "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ" == wif
+  end
 end

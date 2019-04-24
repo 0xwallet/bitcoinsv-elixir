@@ -10,6 +10,8 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Protocol.Types.VarInteger
   alias Bitcoin.Util
   alias Bitcoin.Key
+  alias Bitcoin.Crypto
+  alias Bitcoin.DERSig
 
 
   defmodule Resource do
@@ -169,27 +171,42 @@ defmodule Bitcoin.Tx.TxMaker do
     pubkeyhash
   end
 
+  @hash_type <<0x41>>
+
   def create_p2pkh_transaction(priv, unspents, outputs) do
-
-    pub = Key.privkey_to_pubkey(priv)
-
-    version = 1
-
-    lock_time = 0
-
-    hash_type = 0x41
+    pubkey = Key.privkey_to_pubkey(priv) |> IO.inspect(label: "pubk")
 
     output_block = construct_output_block(outputs)
 
     input_block = construct_input_block(unspents)
 
-    %Messages.Tx{
+    tx = %Messages.Tx{
       inputs: input_block,
       outputs: output_block,
       version: 1,
       lock_time: 0,
     }
+    data = Messages.Tx.serialize(tx) <> @hash_type
+
+    raw_sig = Crypto.sign(priv, data) |> IO.inspect()
+
+    signature = raw_sig <> @hash_type
+
+    sig_script =
+      <<byte_size(signature)::little>> <>
+      signature <>
+      <<byte_size(pubkey)::little>> <>
+      pubkey
+
+    input_block1 = Enum.map(input_block, fn x ->
+      Map.put(x, :signature_script, sig_script)
+    end)
+
+    %Messages.Tx{ tx |
+      inputs: input_block1
+    }
   end
+
 
   @doc """
   outputs = [
@@ -215,5 +232,6 @@ defmodule Bitcoin.Tx.TxMaker do
   def construct_input_block(utxos) do
     Enum.map(utxos, &utxo_to_input/1)
   end
+
 
 end

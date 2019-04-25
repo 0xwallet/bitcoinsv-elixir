@@ -1195,5 +1195,11 @@ OP_CHECKSIG 的运行流程如下:
 
 接下来根据 txcodpy 中不同的 hashtype, 处理方法也不同.
 
-一般的比特币转账交易采用 sighhashall 类型:
+一般的比特币转账交易采用 sighhash_all 类型: 不需要额外的处理.
+
+![opchecksig](Bitcoin_opchecksig.jpg)
+
+> 图片来自 Bitcoin Wiki
+
+由此, 我们可以逆推出构造签名原文的步骤.
 

@@ -183,15 +183,10 @@ defmodule Bitcoin.Tx.TxMaker do
     pubkeyhash
   end
 
-  def construct_output_block(outputs) do
-    # IO.inspect outputs, label: 1
-    Enum.map(outputs, &avp_to_output/1)
-  end
-
   def create_p2pkh_transaction(priv, utxos, outputs) do
     pubkey = Key.privkey_to_pubkey(priv)
 
-    output_block = construct_output_block(outputs)
+    output_block = Enum.map(outputs, &avp_to_output/1)
 
     input_block = Enum.map(utxos, &utxo_to_input/1)
 
@@ -206,7 +201,7 @@ defmodule Bitcoin.Tx.TxMaker do
       for {u, i} <- Enum.with_index(utxos) do
         script = u.script_pubkey
         inputs = tx.inputs |> List.update_at(i, fn x -> %{x | signature_script: script} end)
-        tx = %Messages.Tx{tx | inputs: inputs}
+        tx = %Messages.Tx{tx | inputs: inputs} |> IO.inspect()
 
         data = Messages.Tx.serialize(tx) <> <<0x41::size(32)-little>>
 
@@ -246,7 +241,7 @@ defmodule Bitcoin.Tx.TxMaker do
   def quick_send() do
     priv = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
     addr = "1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH"
-    utxos = Resource.utxos(addr)
+    utxos = Resource.utxos(addr) |> IO.inspect()
     outputs = [
       {addr, hd(utxos).value - 230}
     ]

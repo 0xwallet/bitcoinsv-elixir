@@ -102,4 +102,12 @@ defmodule Bitcoin.Util do
       |> Enum.map(fn [a, b] -> Bitcoin.Util.double_sha256(a <> b) end)
       |> merkle_tree_hash
   end
+
+  def from_rpc_hex(b) do
+    b |> Binary.from_hex() |> Binary.reverse()
+  end
+
+  def print(x, label \\ "") do
+    IO.inspect x, limit: :infinity, label: label
+  end
 end

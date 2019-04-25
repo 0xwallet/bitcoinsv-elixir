@@ -13,11 +13,11 @@ defmodule Bitcoin.Protocol.Types.TxInput do
     sequence: non_neg_integer
   }
 
-  defimpl Inspect, for: __MODULE__ do
-    def inspect(data, _opts) do
-      "%In{ ##{data.sequence} output: #{data.previous_output |> Kernel.inspect}, sig: #{data.signature_script |> Base.encode16} }"
-    end
-  end
+  # defimpl Inspect, for: __MODULE__ do
+  #   def inspect(data, _opts) do
+  #     "%In{ ##{data.sequence} output: #{data.previous_output |> Kernel.inspect}, sig: #{data.signature_script |> Base.encode16} }"
+  #   end
+  # end
 
   @spec parse_stream(binary) :: {t, binary}
   def parse_stream(payload) do
@@ -40,5 +40,6 @@ defmodule Bitcoin.Protocol.Types.TxInput do
     (s.signature_script |> VarString.serialize) <>
     << s.sequence ::  unsigned-little-integer-size(32) >>
   end
+
 
 end

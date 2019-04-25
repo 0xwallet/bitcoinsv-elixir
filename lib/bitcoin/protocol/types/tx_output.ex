@@ -10,11 +10,11 @@ defmodule Bitcoin.Protocol.Types.TxOutput do
     pk_script: binary
   }
 
-  defimpl Inspect, for: __MODULE__ do
-    def inspect(data, _opts) do
-      "%Out{ #{data.value} -> #{data.pk_script |> Base.encode16} }"
-    end
-  end
+  # defimpl Inspect, for: __MODULE__ do
+  #   def inspect(data, _opts) do
+  #     "%Out{ #{data.value} -> #{data.pk_script |> Base.encode16} }"
+  #   end
+  # end
 
   @spec parse_stream(binary) :: {t, binary}
   def parse_stream(payload) do

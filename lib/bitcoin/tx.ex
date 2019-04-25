@@ -33,6 +33,27 @@ defmodule Bitcoin.Tx do
       |> Bitcoin.Util.double_sha256
   end
 
+
+  # @doc """
+  # Sign a transaction.
+  # """
+  # def sign(%Messages.Tx{} = tx) do
+  #   tx
+  #   |> sign_each_input()
+  # end
+
+  # defp sign_each_input(tx) do
+  #   inputs = tx.inputs
+  #   sighash = sighash(tx, nil, nil, nil) # TODO
+
+  #   inputs2 =
+  #     for input <- inputs do
+  #       TxInput.sign(input, sighash)
+  #     end
+
+  #   %Messages.Tx{tx | inputs: inputs2}
+  # end
+
   @doc """
   Sum of all transaction outputs (in satoshis)
   """

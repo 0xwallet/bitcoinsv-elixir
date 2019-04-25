@@ -204,7 +204,6 @@ defmodule Bitcoin.Tx.TxMaker do
     end
 
     unspents = Enum.map(utxos, &prepare_utxo_for_sign/1)
-    lock_time = <<0::size(32)>>
 
     tx = %Messages.Tx{
       outputs: outputs,
@@ -228,7 +227,7 @@ defmodule Bitcoin.Tx.TxMaker do
         txin.amount,
         @sequence,
         hashOutputs,
-        lock_time,
+        <<0::size(32)>>,
         @hash_type
       ] |> IO.iodata_to_binary()
 

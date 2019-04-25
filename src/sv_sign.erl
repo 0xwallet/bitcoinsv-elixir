@@ -8,7 +8,9 @@
 priv() ->
     int2bin(16#1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A).
 
-%% Crypto functions
+%%
+%% Crypto Hash functions
+%%
 
 sha256(B) ->
     crypto:hash(sha256, B).
@@ -27,7 +29,6 @@ test_hash() ->
     <<16#be586c8b20dee549bdd66018c7a79e2b67bb88b7c7d428fa4c970976d2bec5ba:256/big>> = hash256(B),
     <<16#7322e2bd8535e476c092934e16a6169ca9b707ec:160/big>> = hash160(B).
 
-%%
 
 priv2pub(P) ->
     {Pub, P} = crypto:generate_key(ecdh, secp256k1, P),

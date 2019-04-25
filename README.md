@@ -8,6 +8,7 @@
 - [网络相关模块](#网络模块)
 - [比特币交易构造](#交易构造)
 - [比特币脚本](#比特币脚本)
+- [如何验证交易签名](#签名验证)
 
 ## 使用说明
 
@@ -1165,3 +1166,31 @@ parse_else 的行为与 parse_if 类似, 只是会将操作符读取到 else_blo
         <<0x82>>(即 [1, 0, 0, 0, 0, 0, 1, 0]) 表示 -2
         <<0x11>>(即 [0, 0, 0, 1, 0, 0, 0, 1]) 表示 17
         <<0xFF, 0xFF, 0xFF, 0xFF>>(即 [255, 255, 255, 255], 第一个 byte 用二进制表示是 [1, 1, 1, 1, 1, 1, 1, 1], 按 ScriptInteger 格式表示的是 -127), 表示 -2147483647.
+
+# 签名验证
+
+参考 https://en.bitcoin.it/wiki/OP_CHECKSIG
+
+对于普通的交易 input, 如果当前这笔交易的创造者可以成功地制造一个 sigscript , 其中使用了正确的 pubkey(对应要花费的 output 里面的 pkscript), 那么这个交易 input 就被认为是合法的.
+
+验证签名的过程实际上是 OP_CHECKSIG 的执行过程. 所需要的参数, 除了 stack 上的参数, 以及 script code 本身, 还需要知道当前的交易, 以及当前 input 的 index.
+
+OP_CHECKSIG 的运行流程如下:
+
+1. pubkey 和 signature 从 stack 上被取出,  signature 的格式是 `[<DER signature> <1 byte hash-type>]`. hashtype 的值是签名的最后一字节.
+
+2. 新的 subscript 被创造出来. 从最先遇到的 OP_CODESEPARATOR 一直到 script 的结尾, 都属于 subscript. 如果没有 OP_CODESEPARATOR, 那么整个 script 变成 subscript.
+
+3. 任何 sig 都会被从 subscript 里删除.
+
+4. 剩余的 OP_CODESEPARATOR 会被从 subscript 删除.
+
+5. hashtype 被从 sig 的最后 1 字节取下来并存储.
+
+6. 复制一份当前的交易 txcopy.
+
+7. txcopy 中所有 input 的 script 都被设置成空. (1 字节 0x00).
+
+8. txcopy 中当前的 input 被设置成 subscript. (前缀verint 格式的长度).
+
+接下来根据 txcodpy 中不同的 hashtype, 处理方法也不同.

@@ -19,8 +19,8 @@ defmodule Bitcoin.Tx.TxMaker do
     end
   end
 
-  def broadcast(bin) do
-    bin |> Binary.to_hex() |> SvApi.Bitindex.broadcast()
+  def broadcast(hex) do
+    SvApi.Bitindex.broadcast(hex)
   end
 
   def address_to_public_key_hash(addr) do

@@ -22,11 +22,6 @@ we need a flexiable and high performance node implementation for billions of use
 * Allow it to run across multiple nodes
 
 
-## Why?
-
-It's handy to have Bitcoin tools for operations on addresses, signatures, transactions and scripts in the language of your choice.
-Regarding full node, because it's fun. Given that Bitcoin protocol is defined by the reference client, playing with your
-own implementation is one of a very few ways to truly understand how Bitcoin works. **It is not meant to be used as a wallet.**
 
 ## Usage
 

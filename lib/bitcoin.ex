@@ -24,5 +24,11 @@ defmodule Bitcoin do
     opts = [strategy: :one_for_one, name: Bitcoin.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  def decode_tx(hex) do
+    hex
+    |> Binary.from_hex()
+    |> Bitcoin.Protocol.Messages.Tx.parse()
+  end
 end
 

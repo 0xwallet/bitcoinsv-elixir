@@ -73,24 +73,18 @@ locktime() ->
 hashtype() ->
     <<16#41:32/little>>.
 
-% [
-%   %Bitcoin.Tx.Utxo{
-%     hash: <<46, 45, 198, 243, 173, 90, 170, 196, 175, 122, 249, 112, 6, 210, 6,
-%       208, 247, 196, 32, 234, 56, 176, 34, 83, 238, 205, 217, 111, 53, 132, 8,
-%       26>>,
-%     index: 1,
-%     script_pubkey: <<118, 169, 20, 146, 111, 145, 91, 215, 40, 85, 134, 174,
-%       121, 91, 164, 4, 97, 211, 212, 174, 83, 118, 8, 136, 172>>,
-%     value: 12578070
-%   }
-% ]
-
 len_prefix(B) ->
     S = varint(byte_size(B)),
     <<S/bytes, B/bytes>>.
 
 sign(Priv, Data) ->
     sig_normalize(crypto:sign(ecdsa, sha256, Data, [Priv, secp256k1])).
+
+input_count(U) ->
+    varint(length(U)).
+
+output_count(O) ->
+    varint(length(O)).
 
 create_tx() ->
     Priv = priv(),
@@ -125,7 +119,7 @@ create_tx() ->
         hashtype()
     ]),
 
-    Sig = sign(Priv, ToSign),
+    Sig = sign(Priv, sha256(ToSign)),
     Sig1 = <<Sig/bytes, 16#41>>,
 
     SigScript = iolist_to_binary([push(Sig1), push(Pub)]),

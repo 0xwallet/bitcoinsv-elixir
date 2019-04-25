@@ -1191,6 +1191,9 @@ OP_CHECKSIG 的运行流程如下:
 
 7. txcopy 中所有 input 的 script 都被设置成空. (1 字节 0x00).
 
-8. txcopy 中当前的 input 被设置成 subscript. (前缀verint 格式的长度).
+8. txcopy 中当前的 input 的 script 被设置成 subscript. (前缀verint 格式的长度).
 
 接下来根据 txcodpy 中不同的 hashtype, 处理方法也不同.
+
+一般的比特币转账交易采用 sighhashall 类型:
+

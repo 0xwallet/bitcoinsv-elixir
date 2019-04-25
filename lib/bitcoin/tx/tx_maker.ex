@@ -11,7 +11,7 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Util
   alias Bitcoin.Key
 
-  import Bitcoin.Crypto
+  alias Bitcoin.Crypto
 
 
   defmodule Resource do
@@ -71,9 +71,6 @@ defmodule Bitcoin.Tx.TxMaker do
     {:noreply, %{state | utxos: utxos, balance: balance}}
   end
 
-  def handle_info(:make_tx, state) do
-
-  end
 
   defp sum_of_utxos(list) do
     for %{value: v} <- list do
@@ -123,14 +120,14 @@ defmodule Bitcoin.Tx.TxMaker do
     end
   end
 
-  def estimated_size(n_in, n_out) do
-    4 +  # version
-    n_in * 148  # input compressed
-    + byte_size(VarInteger.serialize(n_in))
-    + n_out * 34  # excluding op_return outputs, dealt with separately
-    + byte_size(VarInteger.serialize(n_out))
-    + 4  # time lock
-  end
+  # def estimated_size(n_in, n_out) do
+  #   4 +  # version
+  #   n_in * 148  # input compressed
+  #   + byte_size(VarInteger.serialize(n_in))
+  #   + n_out * 34  # excluding op_return outputs, dealt with separately
+  #   + byte_size(VarInteger.serialize(n_out))
+  #   + 4  # time lock
+  # end
 
   defp add_outputs(tx, avps) do
     outputs = Enum.map(avps, &avp_to_output/1)
@@ -186,61 +183,43 @@ defmodule Bitcoin.Tx.TxMaker do
     pubkeyhash
   end
 
-  @hash_type <<0x41::size(32)-little>>
-  @sequence <<0xffffffff::size(32)-little>>
+  def construct_output_block(outputs) do
+    # IO.inspect outputs, label: 1
+    Enum.map(outputs, &avp_to_output/1)
+  end
 
-  def create_p2pkh_transaction(priv, utxos, avps) do
+  def create_p2pkh_transaction(priv, utxos, outputs) do
     pubkey = Key.privkey_to_pubkey(priv)
-    scriptcode = Key.privkey_to_scriptcode(priv)
-    scriptcode_len = VarInteger.serialize(byte_size(scriptcode))
 
-    outputs =
-      for x <- avps do
-        avp_to_output(x)
-      end
+    output_block = construct_output_block(outputs)
 
-    output_block = for x <- outputs, into: <<>> do
-      TxOutput.serialize(x)
-    end
-
-    unspents = Enum.map(utxos, &prepare_utxo_for_sign/1)
+    input_block = Enum.map(utxos, &utxo_to_input/1)
 
     tx = %Messages.Tx{
-      outputs: outputs,
+      inputs: input_block,
+      outputs: output_block,
       version: 1,
       lock_time: 0,
     }
 
-    hashPrevouts = double_sha256(for x <- unspents, into: <<>>, do: x.txid <> x.txindex)
-    hashSequence = double_sha256(for _ <- unspents, into: <<>>, do: @sequence)
-    hashOutputs = double_sha256(output_block)
+    inputs =
+      for {u, i} <- Enum.with_index(utxos) do
+        script = u.script_pubkey
+        inputs = tx.inputs |> List.update_at(i, fn x -> %{x | signature_script: script} end)
+        tx = %Messages.Tx{tx | inputs: inputs}
 
-    inputs = for txin <- unspents do
-      to_be_signed = [
-        <<1::size(32)-little>>,
-        hashPrevouts,
-        hashSequence,
-        txin.txid,
-        txin.txindex,
-        scriptcode_len,
-        scriptcode,
-        txin.amount,
-        @sequence,
-        hashOutputs,
-        <<0::size(32)>>,
-        @hash_type
-      ] |> IO.iodata_to_binary()
+        data = Messages.Tx.serialize(tx) <> <<0x41::size(32)-little>>
 
-      signature = sign(priv, to_be_signed) <> <<0x41>>
+        sig = Crypto.sign(priv, Crypto.sha256(data)) <> <<0x41>>
 
-      sig_script =
-        <<byte_size(signature)::little>> <>
-        signature <>
-        <<byte_size(pubkey)::little>> <>
-        pubkey
+        sig_script =
+          <<byte_size(sig)::little>> <>
+          sig <>
+          <<byte_size(pubkey)::little>> <>
+          pubkey
 
-      %TxInput{ utxo_to_input(txin.utxo) | signature_script: sig_script}
-    end
+        %TxInput{ Enum.at(inputs, i) | signature_script: sig_script }
+      end
 
     %Messages.Tx{ tx |
       inputs: inputs

@@ -13,9 +13,6 @@ defmodule Bitcoin.Tx do
 
   require Logger
 
-  # satoshis/byte
-  @fee_rate 3
-
   @type t_hash :: Bitcoin.t_hash
 
   @doc """
@@ -37,25 +34,25 @@ defmodule Bitcoin.Tx do
   end
 
 
-  @doc """
-  Sign a transaction.
-  """
-  def sign(%Messages.Tx{} = tx) do
-    tx
-    |> sign_each_input()
-  end
+  # @doc """
+  # Sign a transaction.
+  # """
+  # def sign(%Messages.Tx{} = tx) do
+  #   tx
+  #   |> sign_each_input()
+  # end
 
-  defp sign_each_input(tx) do
-    inputs = tx.inputs
-    sighash = sighash(tx, nil, nil, nil) # TODO
+  # defp sign_each_input(tx) do
+  #   inputs = tx.inputs
+  #   sighash = sighash(tx, nil, nil, nil) # TODO
 
-    inputs2 =
-      for input <- inputs do
-        TxInput.sign(input, sighash)
-      end
+  #   inputs2 =
+  #     for input <- inputs do
+  #       TxInput.sign(input, sighash)
+  #     end
 
-    %Messages.Tx{tx | inputs: inputs2}
-  end
+  #   %Messages.Tx{tx | inputs: inputs2}
+  # end
 
   @doc """
   Sum of all transaction outputs (in satoshis)

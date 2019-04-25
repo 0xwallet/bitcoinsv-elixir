@@ -4,7 +4,7 @@ defmodule Bitcoin.Protocol.Types.TxInput do
   alias Bitcoin.Protocol.Types.Outpoint
 
   defstruct previous_output: %Outpoint{}, # The previous output transaction reference, as an OutPoint structure
-            signature_script: <<>>, # Computational Script for confirming transaction authorization
+            signature_script: <<0>>, # Computational Script for confirming transaction authorization
             sequence: 0 # Transaction version as defined by the sender. Intended for "replacement" of transactions when information is updated before inclusion into a block.
 
   @type t :: %__MODULE__{
@@ -41,11 +41,5 @@ defmodule Bitcoin.Protocol.Types.TxInput do
     << s.sequence ::  unsigned-little-integer-size(32) >>
   end
 
-  @doc """
-  Sign a Txinput with private key.
-  """
-  def sign(%__MODULE__{}, key) do
-    #TODO
-  end
 
 end

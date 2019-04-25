@@ -12,7 +12,7 @@ defmodule Bitcoin.Protocol.Message.Payload do
           #{data.payload |> String.Chars.to_string()}
         raw data:
           #{"0x" <> Base.encode16(data.raw_data)}
-      """ |> String.strip()
+      """ |> String.trim()
     end
   end
 

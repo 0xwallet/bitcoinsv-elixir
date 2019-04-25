@@ -1,7 +1,7 @@
 # bitcoinsv-elixir
 
 Since bitcoin SV network has started, we need a cloud wallet server which can address the need for mainstream users, especially for business / organization / merchants who wants to be connected to the MetaNet. which is an important platform for the future 
-internet of value. The core difference between classical internet and MetaNet is the additional blockchain layer on top of TCPIP. since many important feature requires a bitcoin node for operations on addresses, signatures, transactions and scripts, 
+IoV (Internet of Value). The core difference between classical internet and MetaNet is the additional blockchain layer on top of TCPIP. since many important feature requires a bitcoin node for operations on addresses, signatures, transactions and scripts, 
 we need a flexiable and high performance node implementation for billions of users (humans & machines).      
 
 ## Current status
@@ -30,17 +30,17 @@ own implementation is one of a very few ways to truly understand how Bitcoin wor
 
 ## Usage
 
-*** Setup & Install
-**** Elixir
-**** Database
-**** Config File
-*** CLI operations
-**** Check balance of an address 
-**** Send Bitcoin to an address with optional fees
-*** Dashboard API
-**** User deposit status API
-**** User withdraw status API 
-**** Transaction signing with Cold Wallet 
+- Setup & Install
+    - Elixir
+    - Database
+    - Config File
+- CLI operations
+    - Check balance of an address 
+    - Send Bitcoin to an address with optional fees
+- Dashboard API
+    - User deposit status API
+    - User withdraw status API 
+    - Transaction signing with Cold Wallet 
 
 
 

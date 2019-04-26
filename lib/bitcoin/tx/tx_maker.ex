@@ -3,6 +3,7 @@ defmodule Bitcoin.Tx.TxMaker do
   alias Bitcoin.Protocol.Types.VarInteger
   alias Bitcoin.Key
   alias Bitcoin.Crypto
+  require Logger
 
   defmodule Resource do
     def utxos(addr) do
@@ -180,6 +181,38 @@ defmodule Bitcoin.Tx.TxMaker do
     ]))
   end
 
+
+  def estimate_tx_fee(n_in, n_out, satoshis, compressed, op_return_size \\ 0) do
+
+    # 费率未知, 返回 0
+    if !satoshis do
+      0
+    else
+
+      # 估算交易体积
+      estimated_size = (
+          # version
+          4 +
+          n_in * (if compressed, do: 148, else: 180) +
+          # input count 的长度
+          len(int_to_varint(n_in)) +
+          # excluding op_return outputs, dealt with separately
+          n_out * 34 +
+          # output count 的长度
+          len(int_to_varint(n_out)) +
+          # grand total size of op_return outputs(s) and related field(s)
+          op_return_size +
+          # time lock
+          4
+      )
+
+      estimated_fee = estimated_size * satoshis # 体积乘以费率得到估计的手续费
+
+      Logger.debug("Estimated fee: #{estimated_fee} satoshis for #{estimated_size} bytes")
+
+      estimated_fee
+    end
+  end
 
   @doc """
   This function just for testing.

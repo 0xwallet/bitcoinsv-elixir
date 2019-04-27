@@ -18,6 +18,11 @@ defmodule Bitcoin.Tx.TxMaker do
       end
       utxos
     end
+
+    # def balance(_addr) do
+    #   # TODO
+    #   0
+    # end
   end
 
   def broadcast(hex) do

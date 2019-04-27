@@ -40,7 +40,7 @@ IoV（价值互联网）。经典互联网和MetaNet的核心差异是TCPIP之�
         ```elixir
         # 继续
         > outputs = [
-        >   ("1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 0.0008) # donate 0.0008 bsv to bitcoinsv-elixir
+        >   ("1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 800) # donate 800 satoshi bsv to bitcoinsv-elixir team
         > ]
         > transfer(my_wallet, outputs)
         "the transaction's txid"

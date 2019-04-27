@@ -27,14 +27,31 @@ IoV（价值互联网）。经典互联网和MetaNet的核心差异是TCPIP之�
  -  Elixir
  - 数据库
  - 配置文件
- -  CLI操作
- - 检查地址的余额
- - 将比特币发送到可选费用的地址
+ - CLI操作
+    在项目目录下运行 `iex -S mix` 进入 shell.
+    - 检查地址的余额
+        ```elixir
+        > import Bitcoin.Cli
+        > my_wallet = new_wallet("Your private key in hex string")
+        > get_balance(my_wallet)
+        888888 # satoshis
+        ```
+    - 将比特币发送到可选费用的地址
+        ```elixir
+        # 继续
+        > outputs = [
+        >   ("1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 0.0008) # donate 0.0008 bsv to bitcoinsv-elixir
+        > ]
+        > transfer(my_wallet, outputs)
+        "the transaction's txid"
+        > transfer(my_wallet, outputs, 2) # you can set the fee per byte, default is 1 satoshi/byte
+        "the transation's txid"
+        ```
+
  - 仪表板API
  - 用户存款状态API
  - 用户撤销状态API
  - 与Cold Wallet签订交易
-
 
 
 

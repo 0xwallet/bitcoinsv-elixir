@@ -6,7 +6,8 @@ defmodule Bitcoin.Cli do
 
   # hex_string -> wallet
   def new_wallet(hex_private_key) do
-    GenServer.start_link(__MODULE__, {:hex_private_key, hex_private_key})
+    {:ok, pid} = GenServer.start_link(__MODULE__, {:hex_private_key, hex_private_key})
+    pid
   end
 
 

@@ -32,7 +32,7 @@ IoV（价值互联网）。经典互联网和MetaNet的核心差异是TCPIP之�
     - 检查地址的余额
         ```elixir
         > import Bitcoin.Cli
-        > {:ok, my_wallet} = new_wallet("Your private key in hex string")
+        > my_wallet = new_wallet("Your private key in hex string")
         > get_balance(my_wallet)
         888888 # satoshis
         ```
@@ -43,9 +43,9 @@ IoV（价值互联网）。经典互联网和MetaNet的核心差异是TCPIP之�
         >   {"1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH", 800} # donate 800 satoshi bsv to bitcoinsv-elixir team
         > ]
         > transfer(my_wallet, outputs)
-        {:ok, "the transaction's txid"}
+        "the transaction's txid"
         > transfer(my_wallet, outputs, 2) # you can set the fee per byte, default is 1 satoshi/byte
-        {:ok, "the transation's txid"}
+        "the transation's txid"
         ```
 
  - 仪表板API

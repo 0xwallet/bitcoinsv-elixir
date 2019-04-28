@@ -226,7 +226,7 @@ defmodule Bitcoin.Tx.TxMaker do
   def quick_send() do
     priv = "1AEB4829D9E92290EF35A3812B363B0CA87DFDA2B628060648339E9452BC923A" |> Binary.from_hex()
     addr = "1EMHJsiXjZmffBUWevGS5mWdoacmpt8vdH"
-    utxos = Resource.utxos(addr)
+    utxos = [Resource.utxos(addr) |> IO.inspect() |> Enum.max_by(fn x -> x.amount end)]
     outputs = [
       {addr, hd(utxos).amount - 230}
     ]

@@ -49,11 +49,6 @@ defmodule Bitcoin.Cli do
     {:reply, state.balance, state}
   end
 
-  defp get_sum_of_utxos(utxos) do
-    Enum.reduce(utxos, 0, fn x, acc -> acc + x.amount end)
-  end
-
-
 
   def handle_call({:transfer, outputs, fee_per_byte}, _, state) do
     sum_of_outputs = Enum.reduce(outputs, 0, fn {_, value}, acc -> acc + value end)
@@ -75,9 +70,15 @@ defmodule Bitcoin.Cli do
 
     rpc_txid = TxMaker.broadcast(hex_tx)
 
-    # TODO update balance;utxos
     {:reply, rpc_txid, state}
   end
+
+  defp get_sum_of_utxos(utxos) do
+    Enum.reduce(utxos, 0, fn x, acc -> acc + x.amount end)
+  end
+
+
+
 
   defp get_enough_utxos(utxos, sum_of_outputs, output_count, spendings, spending_count, fee_per_byte) do
     fee_with_change = get_fee(spending_count, output_count + 1, fee_per_byte)
